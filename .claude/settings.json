@@ -1,0 +1,38 @@
+{
+  "autoUpdatesChannel": "stable",
+  "env": {
+    "CLAUDE_CODE_GIT_BASH_PATH": "C:\\Program Files\\Git\\bin\\bash.exe"
+  },
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "disableBypassPermissionsMode": "disable",
+    "allow": [
+      "Bash(npm install)",
+      "Bash(npm run *)",
+      "Bash(npx prisma *)",
+      "Bash(npx tsc *)",
+      "Bash(npx eslint *)",
+      "Bash(git status)",
+      "Bash(git diff *)"
+    ],
+    "ask": [
+      "Bash(docker *)",
+      "Bash(git commit *)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)",
+      "Read(./config/credentials.json)",
+      "Bash(git push *)",
+      "Bash(git reset --hard *)",
+      "Bash(git clean *)",
+      "Bash(rm -rf *)",
+      "Bash(npm publish *)",
+      "Bash(npx vercel *)",
+      "Bash(npx wrangler deploy *)",
+      "Bash(docker system prune *)"
+    ]
+  }
+}
+

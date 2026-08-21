@@ -1,0 +1,30 @@
+{
+  "name": "soporteqr",
+  "private": true,
+  "version": "0.1.0",
+  "description": "SoporteQR - Gestion de activos informaticos e incidencias tecnicas mediante codigos QR",
+  "workspaces": [
+    "apps/web",
+    "apps/api",
+    "packages/shared"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/api & npm run dev --workspace=apps/web",
+    "dev:api": "npm run dev --workspace=apps/api",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspace=packages/shared && npm run build --workspace=apps/api && npm run build --workspace=apps/web",
+    "lint": "npm run lint --workspace=apps/api && npm run lint --workspace=apps/web",
+    "test": "npm run test --workspace=apps/api && npm run test --workspace=apps/web",
+    "test:e2e": "npm run test:e2e --workspace=apps/web",
+    "db:migrate": "npm run db:migrate --workspace=apps/api",
+    "db:seed": "npm run db:seed --workspace=apps/api",
+    "db:studio": "npm run db:studio --workspace=apps/api",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
