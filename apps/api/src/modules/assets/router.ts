@@ -1,0 +1,66 @@
+import { Router } from 'express';
+import type { Request, Response } from 'express';
+import { createAssetSchema, updateAssetSchema } from '@soporteqr/shared';
+import { requireAuth, requireRole } from '../../middleware/auth.js';
+import { validate } from '../../middleware/validate.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
+import { HttpError } from '../../utils/httpError.js';
+import { createAsset, getAssetByPublicCode, getAssetById, listAssets, updateAsset } from './service.js';
+
+export const assetsRouter = Router();
+
+assetsRouter.get(
+  '/publico/:publicAssetCode',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { publicAssetCode } = req.params;
+    if (!publicAssetCode) throw HttpError.notFound('Activo no encontrado');
+    const activo = await getAssetByPublicCode(publicAssetCode);
+    res.json({ asset: activo });
+  }),
+);
+
+assetsRouter.use(requireAuth);
+
+assetsRouter.get(
+  '/',
+  asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) throw HttpError.unauthorized();
+    const activos = await listAssets(req.user.organizationId);
+    res.json({ assets: activos });
+  }),
+);
+
+assetsRouter.get(
+  '/:id',
+  asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) throw HttpError.unauthorized();
+    const { id } = req.params;
+    if (!id) throw HttpError.notFound('Activo no encontrado');
+    const activo = await getAssetById(req.user.organizationId, id);
+    res.json({ asset: activo });
+  }),
+);
+
+assetsRouter.post(
+  '/',
+  requireRole('ADMINISTRADOR'),
+  validate(createAssetSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) throw HttpError.unauthorized();
+    const activo = await createAsset(req.user.organizationId, req.user.id, req.body, req.ip);
+    res.status(201).json({ asset: activo });
+  }),
+);
+
+assetsRouter.patch(
+  '/:id',
+  requireRole('ADMINISTRADOR'),
+  validate(updateAssetSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) throw HttpError.unauthorized();
+    const { id } = req.params;
+    if (!id) throw HttpError.notFound('Activo no encontrado');
+    const activo = await updateAsset(req.user.organizationId, req.user.id, id, req.body, req.ip);
+    res.json({ asset: activo });
+  }),
+);
