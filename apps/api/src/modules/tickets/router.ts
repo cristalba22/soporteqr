@@ -7,7 +7,7 @@ import {
   ticketFilterSchema,
   updateTicketStatusSchema,
 } from '@soporteqr/shared';
-import { requireAuth } from '../../middleware/auth.js';
+import { requireAuth, requireRole } from '../../middleware/auth.js';
 import { validate } from '../../middleware/validate.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { HttpError } from '../../utils/httpError.js';
@@ -57,6 +57,7 @@ ticketsRouter.post(
 
 ticketsRouter.post(
   '/:id/asignar',
+  requireRole('TECNICO', 'ADMINISTRADOR'),
   validate(assignTicketSchema),
   asyncHandler(async (req: Request, res: Response) => {
     if (!req.user) throw HttpError.unauthorized();
@@ -69,6 +70,7 @@ ticketsRouter.post(
 
 ticketsRouter.post(
   '/:id/estado',
+  requireRole('TECNICO', 'ADMINISTRADOR'),
   validate(updateTicketStatusSchema),
   asyncHandler(async (req: Request, res: Response) => {
     if (!req.user) throw HttpError.unauthorized();
