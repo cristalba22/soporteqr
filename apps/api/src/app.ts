@@ -11,6 +11,7 @@ import { assetsRouter } from './modules/assets/router.js';
 import { ticketsRouter } from './modules/tickets/router.js';
 import { locationsRouter } from './modules/locations/router.js';
 import { categoriesRouter } from './modules/categories/router.js';
+import { usersRouter } from './modules/users/router.js';
 
 export function createApp(): Express {
   const app = express();
@@ -45,6 +46,7 @@ export function createApp(): Express {
   app.use('/api/tickets', ticketsRouter);
   app.use('/api/locations', locationsRouter);
   app.use('/api/categories', categoriesRouter);
+  app.use('/api/users', usersRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
