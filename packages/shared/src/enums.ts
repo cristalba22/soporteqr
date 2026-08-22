@@ -53,6 +53,7 @@ export const NotificationType = {
   TICKET_RESUELTO: 'TICKET_RESUELTO',
 } as const;
 export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType];
+export const NOTIFICATION_TYPES = Object.values(NotificationType);
 
 export const AuditAction = {
   LOGIN_EXITOSO: 'LOGIN_EXITOSO',
@@ -73,3 +74,4 @@ export const AuditAction = {
   TICKET_COMENTARIO_AGREGADO: 'TICKET_COMENTARIO_AGREGADO',
 } as const;
 export type AuditAction = (typeof AuditAction)[keyof typeof AuditAction];
+export const AUDIT_ACTIONS = Object.values(AuditAction);

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   ASSET_STATUSES,
+  AUDIT_ACTIONS,
   TICKET_PRIORITIES,
   TICKET_STATUSES,
   USER_ROLES,
@@ -35,11 +36,17 @@ export const createLocationSchema = z.object({
 });
 export type CreateLocationInput = z.infer<typeof createLocationSchema>;
 
+export const updateLocationSchema = createLocationSchema.partial();
+export type UpdateLocationInput = z.infer<typeof updateLocationSchema>;
+
 export const createCategorySchema = z.object({
   nombre: z.string().trim().min(2).max(80),
   descripcion: z.string().trim().max(250).optional(),
 });
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
+
+export const updateCategorySchema = createCategorySchema.partial();
+export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;
 
 export const createAssetSchema = z.object({
   codigoInterno: z.string().trim().min(2).max(40),
@@ -96,3 +103,14 @@ export const ticketFilterSchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 });
 export type TicketFilterInput = z.infer<typeof ticketFilterSchema>;
+
+export const auditFilterSchema = z.object({
+  action: z.enum(AUDIT_ACTIONS as [string, ...string[]]).optional(),
+  userId: z.string().uuid().optional(),
+  entidad: z.string().trim().max(60).optional(),
+  desde: z.string().datetime().optional(),
+  hasta: z.string().datetime().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+});
+export type AuditFilterInput = z.infer<typeof auditFilterSchema>;

@@ -9,6 +9,8 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { authRouter } from './modules/auth/router.js';
 import { assetsRouter } from './modules/assets/router.js';
 import { ticketsRouter } from './modules/tickets/router.js';
+import { locationsRouter } from './modules/locations/router.js';
+import { categoriesRouter } from './modules/categories/router.js';
 
 export function createApp(): Express {
   const app = express();
@@ -41,6 +43,8 @@ export function createApp(): Express {
   app.use('/api/auth', authRouter);
   app.use('/api/assets', assetsRouter);
   app.use('/api/tickets', ticketsRouter);
+  app.use('/api/locations', locationsRouter);
+  app.use('/api/categories', categoriesRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
