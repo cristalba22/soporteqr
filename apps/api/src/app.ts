@@ -14,6 +14,7 @@ import { categoriesRouter } from './modules/categories/router.js';
 import { usersRouter } from './modules/users/router.js';
 import { notificationsRouter } from './modules/notifications/router.js';
 import { auditRouter } from './modules/audit/router.js';
+import { dashboardRouter } from './modules/dashboard/router.js';
 
 export function createApp(): Express {
   const app = express();
@@ -51,6 +52,7 @@ export function createApp(): Express {
   app.use('/api/users', usersRouter);
   app.use('/api/notifications', notificationsRouter);
   app.use('/api/audit', auditRouter);
+  app.use('/api/dashboard', dashboardRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
