@@ -13,6 +13,7 @@ import { locationsRouter } from './modules/locations/router.js';
 import { categoriesRouter } from './modules/categories/router.js';
 import { usersRouter } from './modules/users/router.js';
 import { notificationsRouter } from './modules/notifications/router.js';
+import { auditRouter } from './modules/audit/router.js';
 
 export function createApp(): Express {
   const app = express();
@@ -49,6 +50,7 @@ export function createApp(): Express {
   app.use('/api/categories', categoriesRouter);
   app.use('/api/users', usersRouter);
   app.use('/api/notifications', notificationsRouter);
+  app.use('/api/audit', auditRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
