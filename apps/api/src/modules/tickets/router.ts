@@ -1,26 +1,43 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import {
+  ALLOWED_ATTACHMENT_MIME_TYPES,
+  MAX_ATTACHMENT_SIZE_BYTES,
   assignTicketSchema,
   createCommentSchema,
   createTicketSchema,
   ticketFilterSchema,
   updateTicketStatusSchema,
 } from '@soporteqr/shared';
+import multer from 'multer';
 import { requireAuth, requireRole } from '../../middleware/auth.js';
 import { validate } from '../../middleware/validate.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { HttpError } from '../../utils/httpError.js';
 import {
   addComment,
+  addAttachment,
   assignTicket,
   createTicket,
   getTicketById,
+  getAttachment,
   listTickets,
   updateTicketStatus,
 } from './service.js';
 
 export const ticketsRouter = Router();
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_ATTACHMENT_SIZE_BYTES, files: 1 },
+  fileFilter: (req, file, callback) => {
+    if (!ALLOWED_ATTACHMENT_MIME_TYPES.includes(file.mimetype)) {
+      callback(HttpError.badRequest('Solo se permiten imagenes PNG, JPG o WebP'));
+      return;
+    }
+    callback(null, true);
+  },
+});
 
 ticketsRouter.use(requireAuth);
 
@@ -29,7 +46,7 @@ ticketsRouter.get(
   validate(ticketFilterSchema, 'query'),
   asyncHandler(async (req: Request, res: Response) => {
     if (!req.user) throw HttpError.unauthorized();
-    const resultado = await listTickets(req.user.organizationId, req.query as never);
+    const resultado = await listTickets(req.user.organizationId, req.user.id, req.user.role, req.query as never);
     res.json(resultado);
   }),
 );
@@ -40,7 +57,7 @@ ticketsRouter.get(
     if (!req.user) throw HttpError.unauthorized();
     const { id } = req.params;
     if (!id) throw HttpError.notFound('Ticket no encontrado');
-    const ticket = await getTicketById(req.user.organizationId, id);
+    const ticket = await getTicketById(req.user.organizationId, id, req.user.id, req.user.role);
     res.json({ ticket });
   }),
 );
@@ -88,7 +105,31 @@ ticketsRouter.post(
     if (!req.user) throw HttpError.unauthorized();
     const { id } = req.params;
     if (!id) throw HttpError.notFound('Ticket no encontrado');
-    const comentario = await addComment(req.user.organizationId, req.user.id, id, req.body, req.ip);
+    const comentario = await addComment(req.user.organizationId, req.user.id, req.user.role, id, req.body, req.ip);
     res.status(201).json({ comentario });
+  }),
+);
+
+ticketsRouter.post(
+  '/:id/adjuntos',
+  upload.single('archivo'),
+  asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) throw HttpError.unauthorized();
+    const { id } = req.params;
+    if (!id) throw HttpError.notFound('Ticket no encontrado');
+    if (!req.file) throw HttpError.badRequest('Debes seleccionar una imagen');
+    const adjunto = await addAttachment(req.user.organizationId, req.user.id, req.user.role, id, req.file);
+    res.status(201).json({ attachment: adjunto });
+  }),
+);
+
+ticketsRouter.get(
+  '/:id/adjuntos/:attachmentId',
+  asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) throw HttpError.unauthorized();
+    const { id, attachmentId } = req.params;
+    if (!id || !attachmentId) throw HttpError.notFound('Adjunto no encontrado');
+    const adjunto = await getAttachment(req.user.organizationId, req.user.id, req.user.role, id, attachmentId);
+    res.download(adjunto.storagePath, adjunto.fileName);
   }),
 );

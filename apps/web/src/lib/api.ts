@@ -155,3 +155,25 @@ export async function uploadAttachment(ticketId: string, file: File): Promise<vo
     throw new ApiError(res.status, (data as { mensaje?: string }).mensaje ?? 'No se pudo subir el adjunto');
   }
 }
+
+export async function downloadAttachment(ticketId: string, attachmentId: string, fileName: string): Promise<void> {
+  const fetchFile = async (isRetry = false): Promise<Response> => {
+    const headers: Record<string, string> = {};
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+    const response = await fetch(`${API_BASE_URL}/api/tickets/${ticketId}/adjuntos/${attachmentId}`, {
+      credentials: 'include',
+      headers,
+    });
+    if (response.status === 401 && !isRetry && (await refreshAccessToken())) return fetchFile(true);
+    return response;
+  };
+
+  const response = await fetchFile();
+  if (!response.ok) throw new ApiError(response.status, 'No se pudo descargar el adjunto');
+  const objectUrl = URL.createObjectURL(await response.blob());
+  const link = document.createElement('a');
+  link.href = objectUrl;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(objectUrl);
+}

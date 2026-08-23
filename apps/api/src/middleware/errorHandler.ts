@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
+import { MulterError } from 'multer';
 import { HttpError } from '../utils/httpError.js';
 
 export function notFoundHandler(req: Request, res: Response): void {
@@ -15,6 +16,12 @@ export function errorHandler(
 ): void {
   if (err instanceof ZodError) {
     res.status(400).json({ error: 'Datos invalidos', details: err.flatten() });
+    return;
+  }
+
+  if (err instanceof MulterError) {
+    const message = err.code === 'LIMIT_FILE_SIZE' ? 'La imagen supera el limite de 5 MB' : 'Adjunto invalido';
+    res.status(400).json({ error: message });
     return;
   }
 

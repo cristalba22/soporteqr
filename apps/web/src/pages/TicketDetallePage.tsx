@@ -12,7 +12,7 @@ import { useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';
-import { api, ApiError } from '../lib/api';
+import { api, ApiError, downloadAttachment, uploadAttachment } from '../lib/api';
 import { ESTADO_CLASSES, ESTADO_LABELS, PRIORIDAD_CLASSES, PRIORIDAD_LABELS, formatFecha } from '../lib/labels';
 
 interface Persona {
@@ -84,6 +84,8 @@ export function TicketDetallePage() {
   const [tecnicoId, setTecnicoId] = useState('');
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const [archivo, setArchivo] = useState<File | null>(null);
+  const [subiendoArchivo, setSubiendoArchivo] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['ticket', id],
@@ -119,6 +121,21 @@ export function TicketDetallePage() {
       queryClient.invalidateQueries({ queryKey: ['ticket', id] });
     } catch (error) {
       setErrorAccion(error instanceof ApiError ? error.message : 'No se pudo agregar el comentario');
+    }
+  };
+
+  const onSubirAdjunto = async () => {
+    if (!id || !archivo) return;
+    setSubiendoArchivo(true);
+    setErrorAccion(null);
+    try {
+      await uploadAttachment(id, archivo);
+      setArchivo(null);
+      await queryClient.invalidateQueries({ queryKey: ['ticket', id] });
+    } catch (error) {
+      setErrorAccion(error instanceof ApiError ? error.message : 'No se pudo subir la imagen');
+    } finally {
+      setSubiendoArchivo(false);
     }
   };
 
@@ -225,16 +242,26 @@ export function TicketDetallePage() {
           </div>
         )}
 
-        {ticket.adjuntos.length > 0 && (
-          <div className="mt-5 border-t border-grafito-200 pt-4">
-            <p className="text-xs uppercase tracking-wide text-grafito-500">Adjuntos</p>
-            <ul className="mt-2 space-y-1 text-sm text-marino-800">
+        <div className="mt-5 border-t border-grafito-200 pt-4">
+          <p className="text-xs uppercase tracking-wide text-grafito-500">Adjuntos</p>
+          {ticket.adjuntos.length > 0 && (
+            <ul className="mt-2 space-y-2 text-sm text-marino-800">
               {ticket.adjuntos.map((adjunto) => (
-                <li key={adjunto.id}>{adjunto.fileName}</li>
+                <li key={adjunto.id} className="flex items-center justify-between rounded-lg bg-grafito-100 px-3 py-2">
+                  <span>{adjunto.fileName} <span className="text-xs text-grafito-500">({Math.ceil(adjunto.sizeBytes / 1024)} KB)</span></span>
+                  <button type="button" onClick={() => void downloadAttachment(ticket.id, adjunto.id, adjunto.fileName)} className="font-semibold text-turquesa-600 hover:underline">Descargar</button>
+                </li>
               ))}
             </ul>
+          )}
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+            <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setArchivo(event.target.files?.[0] ?? null)} className="text-sm text-grafito-600 file:mr-3 file:rounded-lg file:border-0 file:bg-grafito-100 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-marino-900" />
+            <button type="button" disabled={!archivo || subiendoArchivo} onClick={() => void onSubirAdjunto()} className="rounded-lg bg-marino-950 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+              {subiendoArchivo ? 'Subiendo...' : 'Adjuntar imagen'}
+            </button>
           </div>
-        )}
+          <p className="mt-1 text-xs text-grafito-500">PNG, JPG o WebP. Maximo 5 MB.</p>
+        </div>
       </div>
 
       {esGestor && (

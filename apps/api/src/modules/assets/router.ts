@@ -18,7 +18,7 @@ assetsRouter.get(
     const { publicAssetCode } = req.params;
     if (!publicAssetCode) throw HttpError.notFound('Activo no encontrado');
     const activo = await getAssetByPublicCode(publicAssetCode);
-    const reportUrl = buildReportUrl(activo.publicAssetCode, env.CORS_ORIGIN);
+    const reportUrl = buildReportUrl(activo.publicAssetCode, env.APP_BASE_URL);
     const png = await QRCode.toBuffer(reportUrl, { type: 'png', width: 512, margin: 2 });
     res.setHeader('Content-Type', 'image/png');
     res.setHeader('Content-Disposition', `inline; filename="${activo.codigoInterno}-qr.png"`);

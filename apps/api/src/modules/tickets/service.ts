@@ -4,6 +4,11 @@ import {
   TICKET_STATUS_TRANSITIONS,
   buildTicketNumber,
 } from '@soporteqr/shared';
+import type { UserRole } from '@soporteqr/shared';
+import { mkdir, unlink, writeFile } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
+import { randomUUID } from 'node:crypto';
+import { env } from '../../config/env.js';
 import type {
   AssignTicketInput,
   CreateCommentInput,
@@ -44,9 +49,13 @@ const TICKET_INCLUDE = {
   location: true,
 } as const;
 
-export async function listTickets(organizationId: string, filtro: TicketFilterInput) {
+function accesoTicket(organizationId: string, userId: string, role: UserRole) {
+  return role === 'EMPLEADO' ? { organizationId, reporterId: userId } : { organizationId };
+}
+
+export async function listTickets(organizationId: string, userId: string, role: UserRole, filtro: TicketFilterInput) {
   const where = {
-    organizationId,
+    ...accesoTicket(organizationId, userId, role),
     estado: filtro.estado as never,
     prioridad: filtro.prioridad as never,
     categoryId: filtro.categoryId,
@@ -68,13 +77,17 @@ export async function listTickets(organizationId: string, filtro: TicketFilterIn
   return { tickets, total, page: filtro.page, pageSize: filtro.pageSize };
 }
 
-export async function getTicketById(organizationId: string, id: string) {
+export async function getTicketById(organizationId: string, id: string, userId: string, role: UserRole) {
   const ticket = await prisma.ticket.findFirst({
-    where: { id, organizationId },
+    where: { id, ...accesoTicket(organizationId, userId, role) },
     include: {
       ...TICKET_INCLUDE,
-      comentarios: { include: { author: { select: { id: true, nombre: true } } }, orderBy: { createdAt: 'asc' } },
-      adjuntos: true,
+      comentarios: {
+        where: role === 'EMPLEADO' ? { interno: false } : undefined,
+        include: { author: { select: { id: true, nombre: true } } },
+        orderBy: { createdAt: 'asc' },
+      },
+      adjuntos: { select: { id: true, fileName: true, mimeType: true, sizeBytes: true, createdAt: true } },
       historial: { include: { actor: { select: { id: true, nombre: true } } }, orderBy: { createdAt: 'asc' } },
     },
   });
@@ -92,6 +105,10 @@ export async function createTicket(
     where: { publicAssetCode: input.assetPublicCode, organizationId },
   });
   if (!asset) throw HttpError.notFound('Activo no encontrado');
+  if (input.categoryId) {
+    const category = await prisma.category.findFirst({ where: { id: input.categoryId, organizationId } });
+    if (!category) throw HttpError.badRequest('La categoria no pertenece a la organizacion');
+  }
 
   const numero = await generarNumeroTicket(organizationId);
 
@@ -239,12 +256,14 @@ export async function updateTicketStatus(
 export async function addComment(
   organizationId: string,
   authorId: string,
+  role: UserRole,
   ticketId: string,
   input: CreateCommentInput,
   ipAddress?: string,
 ) {
-  const ticket = await prisma.ticket.findFirst({ where: { id: ticketId, organizationId } });
+  const ticket = await prisma.ticket.findFirst({ where: { id: ticketId, ...accesoTicket(organizationId, authorId, role) } });
   if (!ticket) throw HttpError.notFound('Ticket no encontrado');
+  if (role === 'EMPLEADO' && input.interno) throw HttpError.forbidden('No puedes crear notas internas');
 
   const comentario = await prisma.ticketComment.create({
     data: {
@@ -271,4 +290,48 @@ export async function addComment(
   await registrarAuditoria(organizationId, authorId, AuditAction.TICKET_COMENTARIO_AGREGADO, ticketId, ipAddress);
 
   return comentario;
+}
+
+const EXTENSIONES: Record<string, string> = {
+  'image/png': '.png',
+  'image/jpeg': '.jpg',
+  'image/webp': '.webp',
+};
+
+export async function addAttachment(
+  organizationId: string,
+  userId: string,
+  role: UserRole,
+  ticketId: string,
+  file: { originalname: string; mimetype: string; size: number; buffer: Buffer },
+) {
+  const ticket = await prisma.ticket.findFirst({ where: { id: ticketId, ...accesoTicket(organizationId, userId, role) } });
+  if (!ticket) throw HttpError.notFound('Ticket no encontrado');
+
+  const storagePath = resolve(env.UPLOAD_DIR, `${randomUUID()}${EXTENSIONES[file.mimetype] ?? ''}`);
+  await mkdir(dirname(storagePath), { recursive: true });
+  await writeFile(storagePath, file.buffer);
+  try {
+    return await prisma.ticketAttachment.create({
+      data: { ticketId, fileName: file.originalname, mimeType: file.mimetype, sizeBytes: file.size, storagePath },
+      select: { id: true, fileName: true, mimeType: true, sizeBytes: true, createdAt: true },
+    });
+  } catch (error) {
+    await unlink(storagePath).catch(() => undefined);
+    throw error;
+  }
+}
+
+export async function getAttachment(
+  organizationId: string,
+  userId: string,
+  role: UserRole,
+  ticketId: string,
+  attachmentId: string,
+) {
+  const attachment = await prisma.ticketAttachment.findFirst({
+    where: { id: attachmentId, ticketId, ticket: accesoTicket(organizationId, userId, role) },
+  });
+  if (!attachment) throw HttpError.notFound('Adjunto no encontrado');
+  return attachment;
 }
