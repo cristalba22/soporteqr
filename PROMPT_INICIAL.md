@@ -19,5 +19,4 @@ Prioriza este primer flujo vertical:
 
 No avances todavía con IA, WebSockets ni servicios externos. Si Docker no está disponible, deja Docker Compose correctamente configurado, continúa con todo lo que pueda validarse sin el servicio y documenta con precisión la verificación pendiente. No sustituyas PostgreSQL por una base diferente sin solicitar autorización.
 
-Trabaja hasta alcanzar el máximo estado funcional verificable en esta sesión. Al terminar, informa qué funciona, qué comandos ejecutaste, qué pruebas pasaron y qué queda pendiente.
-
+Completa una sola etapa funcional por sesión, crea un commit local y deja el repositorio en un punto recuperable. No intentes abarcar todo el MVP en una conversación. Lee archivos en fragmentos dirigidos, limita las salidas de comandos y evita repetir instalaciones o verificaciones exitosas. Al terminar, informa brevemente qué funciona, qué verificación principal pasó y qué etapa sigue.

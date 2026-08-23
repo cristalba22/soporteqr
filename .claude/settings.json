@@ -13,17 +13,24 @@
       "Bash(npx tsc *)",
       "Bash(npx eslint *)",
       "Bash(git status)",
-      "Bash(git diff *)"
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git log *)"
     ],
     "ask": [
-      "Bash(docker *)",
-      "Bash(git commit *)"
+      "Bash(docker *)"
     ],
     "deny": [
       "Read(./.env)",
       "Read(./.env.*)",
       "Read(./secrets/**)",
       "Read(./config/credentials.json)",
+      "Read(./node_modules/**)",
+      "Read(./**/node_modules/**)",
+      "Read(./**/dist/**)",
+      "Read(./.git/**)",
       "Bash(git push *)",
       "Bash(git reset --hard *)",
       "Bash(git clean *)",
@@ -35,4 +42,3 @@
     ]
   }
 }
-

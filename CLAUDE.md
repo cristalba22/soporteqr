@@ -16,16 +16,31 @@ El resultado debe diferenciarse de un tutorial, un e-commerce, un turnero o una 
 
 ## Forma de trabajo obligatoria
 
-1. Inspeccionar el repositorio antes de modificarlo.
+1. Inspeccionar el repositorio antes de modificarlo con una vista breve (`git status --short`, archivos relevantes y búsquedas dirigidas). No releer todo el repositorio.
 2. Mantener un plan breve y actualizado, pero no detenerse después de planificar.
 3. Implementar primero un flujo vertical completo.
-4. Ejecutar lint, pruebas y build después de cada etapa importante.
+4. Ejecutar lint, pruebas y build una sola vez al terminar cada etapa importante, nunca después de cada archivo o cambio pequeño.
 5. Corregir los errores encontrados antes de continuar.
 6. No dejar botones falsos, datos de producción escritos a mano ni pantallas que aparenten funcionar.
 7. Priorizar un MVP terminado sobre muchas funciones incompletas.
 8. No desplegar, publicar paquetes, crear cuentas externas, hacer push ni comprar servicios.
 9. No leer archivos `.env`, credenciales o secretos. Usar únicamente `.env.example` con valores ficticios.
 10. No usar información de personas reales en los datos de demostración.
+
+## Control de contexto y ritmo de trabajo
+
+Estas reglas son obligatorias porque las sesiones anteriores agotaron el contexto al releer archivos y repetir verificaciones:
+
+1. Trabajar en una sola etapa concreta por vez. Una etapa normal comprende de una a tres pantallas relacionadas o un flujo vertical acotado; no intentar terminar todo el MVP en una sola sesión.
+2. Antes de editar, leer como máximo tres archivos relevantes por lote. Si un archivo supera 400 líneas, buscar primero símbolos con `rg` y leer únicamente el fragmento necesario.
+3. No leer `node_modules`, `dist`, `.git`, archivos generados ni el lockfile completo. No repetir la lectura de archivos que no cambiaron.
+4. Mantener breves las salidas de terminal: mostrar sólo errores relevantes o las últimas 80 líneas. Nunca imprimir árboles recursivos, dependencias completas, archivos grandes enteros ni diffs completos.
+5. No ejecutar `npm install` si las dependencias ya están instaladas y no cambió `package.json`. Ejecutarlo solamente cuando falte una dependencia concreta o cambien las dependencias declaradas.
+6. Durante una etapa usar verificaciones dirigidas. Al finalizar ejecutar, como máximo, una pasada de TypeScript, una de lint y una de pruebas/build pertinente. No repetir un comando exitoso.
+7. Si una verificación falla, corregir usando el error actual y repetirla como máximo dos veces. Si continúa fallando, guardar un checkpoint y documentar el bloqueo sin iniciar ciclos de lectura/compilación.
+8. Después de completar una etapa o acumular aproximadamente 800 líneas modificadas, ejecutar `git status --short`, revisar un resumen con `git diff --stat` y crear un commit local. No esperar permiso para `git add` o `git commit`.
+9. No usar la conversación para narrar cada archivo leído. Comunicar solamente el objetivo actual, un bloqueo real o el resultado de la etapa.
+10. Si la aplicación informa que el contexto supera aproximadamente la mitad o comienza a compactar repetidamente, terminar el cambio en curso, verificarlo una vez, crear un commit y finalizar con un resumen breve. No seguir leyendo archivos ni iniciar otra etapa.
 
 ## Alcance del MVP
 
@@ -150,4 +165,3 @@ No declarar el trabajo terminado hasta que frontend y API compilen, las migracio
 - Instrucciones de instalación, migración, seed y ejecución.
 - Guía de despliegue sin ejecutar el despliegue.
 - Lista de capturas recomendadas para el portfolio.
-
