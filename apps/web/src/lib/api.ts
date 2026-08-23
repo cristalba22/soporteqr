@@ -1,3 +1,5 @@
+import type { TicketPriority, TicketStatus } from '@soporteqr/shared';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export class ApiError extends Error {
@@ -83,6 +85,22 @@ export const api = {
   post: <T>(path: string, body?: unknown) => request<T>(path, { method: 'POST', body }),
   patch: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PATCH', body }),
 };
+
+export interface DashboardSummary {
+  ticketsAbiertos: number;
+  ticketsResueltos: number;
+  tiempoPromedioResolucionHoras: number;
+  distribucionPorEstado: Array<{ estado: TicketStatus; total: number }>;
+  distribucionPorPrioridad: Array<{ prioridad: TicketPriority; total: number }>;
+  distribucionPorCategoria: Array<{ categoryId: string | null; categoria: string; total: number }>;
+  activosConMasIncidencias: Array<{ assetId: string; codigoInterno: string; tipo: string; total: number }>;
+  cargaPorTecnico: Array<{ technicianId: string | null; nombre: string; total: number }>;
+  evolucionMensual: Array<{ mes: string; total: number }>;
+}
+
+export function getDashboardSummary(): Promise<DashboardSummary> {
+  return api.get<DashboardSummary>('/api/dashboard');
+}
 
 export async function uploadAttachment(ticketId: string, file: File): Promise<void> {
   const formData = new FormData();

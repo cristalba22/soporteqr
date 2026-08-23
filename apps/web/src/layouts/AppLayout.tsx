@@ -9,7 +9,10 @@ interface NavItem {
   roles?: UserRole[];
 }
 
-const NAV_ITEMS: NavItem[] = [{ to: '/', label: 'Tickets' }];
+const NAV_ITEMS: NavItem[] = [
+  { to: '/dashboard', label: 'Dashboard', roles: [UserRole.ADMINISTRADOR, UserRole.TECNICO] },
+  { to: '/', label: 'Tickets' },
+];
 
 const ROLE_LABELS: Record<UserRole, string> = {
   [UserRole.EMPLEADO]: 'Empleado',
