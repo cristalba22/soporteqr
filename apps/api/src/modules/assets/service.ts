@@ -25,6 +25,11 @@ async function generarPublicAssetCode(): Promise<string> {
   throw HttpError.conflict('No se pudo generar un codigo publico unico');
 }
 
+async function validarUbicacion(organizationId: string, locationId: string): Promise<void> {
+  const location = await prisma.location.findFirst({ where: { id: locationId, organizationId } });
+  if (!location) throw HttpError.badRequest('La ubicacion no pertenece a la organizacion');
+}
+
 export async function listAssets(organizationId: string) {
   return prisma.asset.findMany({
     where: { organizationId },
@@ -68,6 +73,7 @@ export async function createAsset(
   input: CreateAssetInput,
   ipAddress?: string,
 ) {
+  await validarUbicacion(organizationId, input.locationId);
   const publicAssetCode = await generarPublicAssetCode();
   const asset = await prisma.asset.create({
     data: {
@@ -97,6 +103,7 @@ export async function updateAsset(
 ) {
   const existente = await prisma.asset.findFirst({ where: { id, organizationId } });
   if (!existente) throw HttpError.notFound('Activo no encontrado');
+  if (input.locationId) await validarUbicacion(organizationId, input.locationId);
 
   const asset = await prisma.asset.update({
     where: { id },

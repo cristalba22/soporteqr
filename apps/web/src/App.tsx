@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { AppLayout } from './layouts/AppLayout';
 import { AuthLayout } from './layouts/AuthLayout';
+import { AssetsPage } from './pages/AssetsPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
 import { ReportarPage } from './pages/ReportarPage';
@@ -26,6 +27,9 @@ export function App() {
           <Route path="/" element={<TicketsPage />} />
           <Route path="/tickets/nuevo" element={<TicketNuevoPage />} />
           <Route path="/tickets/:id" element={<TicketDetallePage />} />
+          <Route element={<RoleRoute roles={[UserRole.ADMINISTRADOR, UserRole.TECNICO]} />}>
+            <Route path="/activos" element={<AssetsPage />} />
+          </Route>
           <Route element={<RoleRoute roles={[UserRole.ADMINISTRADOR, UserRole.TECNICO]} />}>
             <Route path="/dashboard" element={<DashboardPage />} />
           </Route>

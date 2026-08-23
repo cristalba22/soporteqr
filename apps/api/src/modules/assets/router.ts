@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { createAssetSchema, updateAssetSchema } from '@soporteqr/shared';
+import { buildReportUrl } from '@soporteqr/shared';
+import QRCode from 'qrcode';
+import { env } from '../../config/env.js';
 import { requireAuth, requireRole } from '../../middleware/auth.js';
 import { validate } from '../../middleware/validate.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
@@ -8,6 +11,21 @@ import { HttpError } from '../../utils/httpError.js';
 import { createAsset, getAssetByPublicCode, getAssetById, listAssets, updateAsset } from './service.js';
 
 export const assetsRouter = Router();
+
+assetsRouter.get(
+  '/publico/:publicAssetCode/qr',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { publicAssetCode } = req.params;
+    if (!publicAssetCode) throw HttpError.notFound('Activo no encontrado');
+    const activo = await getAssetByPublicCode(publicAssetCode);
+    const reportUrl = buildReportUrl(activo.publicAssetCode, env.CORS_ORIGIN);
+    const png = await QRCode.toBuffer(reportUrl, { type: 'png', width: 512, margin: 2 });
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Content-Disposition', `inline; filename="${activo.codigoInterno}-qr.png"`);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.send(png);
+  }),
+);
 
 assetsRouter.get(
   '/publico/:publicAssetCode',

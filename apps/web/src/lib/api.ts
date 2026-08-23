@@ -1,4 +1,4 @@
-import type { TicketPriority, TicketStatus } from '@soporteqr/shared';
+import type { AssetStatus, CreateAssetInput, TicketPriority, TicketStatus } from '@soporteqr/shared';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -85,6 +85,43 @@ export const api = {
   post: <T>(path: string, body?: unknown) => request<T>(path, { method: 'POST', body }),
   patch: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PATCH', body }),
 };
+
+export interface AssetListItem {
+  id: string;
+  codigoInterno: string;
+  publicAssetCode: string;
+  tipo: string;
+  marca: string | null;
+  modelo: string | null;
+  numeroSerie: string | null;
+  estado: AssetStatus;
+  location: { id: string; nombre: string };
+  _count: { tickets: number };
+}
+
+export interface LocationOption {
+  id: string;
+  nombre: string;
+}
+
+export async function getAssets(): Promise<AssetListItem[]> {
+  const data = await api.get<{ assets: AssetListItem[] }>('/api/assets');
+  return data.assets;
+}
+
+export async function getLocations(): Promise<LocationOption[]> {
+  const data = await api.get<{ locations: LocationOption[] }>('/api/locations');
+  return data.locations;
+}
+
+export async function createAsset(input: CreateAssetInput): Promise<AssetListItem> {
+  const data = await api.post<{ asset: AssetListItem }>('/api/assets', input);
+  return data.asset;
+}
+
+export function getAssetQrUrl(publicAssetCode: string): string {
+  return `${API_BASE_URL}/api/assets/publico/${encodeURIComponent(publicAssetCode)}/qr`;
+}
 
 export interface DashboardSummary {
   ticketsAbiertos: number;
