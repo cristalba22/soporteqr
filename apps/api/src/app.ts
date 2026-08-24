@@ -1,10 +1,12 @@
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import express, { type Express } from 'express';
+import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env.js';
+import { openApiSpec } from './docs/openapi.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { authRouter } from './modules/auth/router.js';
 import { assetsRouter } from './modules/assets/router.js';
@@ -43,6 +45,19 @@ export function createApp(): Express {
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
   });
+
+  app.get('/api/docs.json', (req, res) => {
+    res.json(openApiSpec);
+  });
+  app.use(
+    '/api/docs',
+    (req: Request, res: Response, next: NextFunction) => {
+      res.removeHeader('Content-Security-Policy');
+      next();
+    },
+    swaggerUi.serve,
+    swaggerUi.setup(openApiSpec, { customSiteTitle: 'SoporteQR API' }),
+  );
 
   app.use('/api/auth', authRouter);
   app.use('/api/assets', assetsRouter);
