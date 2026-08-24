@@ -1,6 +1,8 @@
 import type { AssetStatus, CreateAssetInput, TicketPriority, TicketStatus } from '@soporteqr/shared';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL || `${window.location.protocol}//${window.location.hostname}:4000`
+).replace(/\/$/, '');
 
 export class ApiError extends Error {
   status: number;
@@ -71,8 +73,10 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    const message = (data as { mensaje?: string; message?: string }).mensaje ??
-      (data as { mensaje?: string; message?: string }).message ??
+    const errorData = data as { error?: string; mensaje?: string; message?: string };
+    const message = errorData.error ??
+      errorData.mensaje ??
+      errorData.message ??
       'Ocurrio un error inesperado';
     throw new ApiError(res.status, message);
   }
