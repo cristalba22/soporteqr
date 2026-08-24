@@ -18,6 +18,7 @@ async function registrarAuditoria(
 export async function listLocations(organizationId: string) {
   return prisma.location.findMany({
     where: { organizationId },
+    include: { _count: { select: { users: true, assets: true, tickets: true } } },
     orderBy: { nombre: 'asc' },
   });
 }
@@ -64,4 +65,23 @@ export async function updateLocation(
   });
   await registrarAuditoria(organizationId, userId, AuditAction.UBICACION_ACTUALIZADA, location.id, ipAddress);
   return location;
+}
+
+export async function deleteLocation(
+  organizationId: string,
+  userId: string,
+  id: string,
+  ipAddress?: string,
+): Promise<void> {
+  const location = await prisma.location.findFirst({
+    where: { id, organizationId },
+    include: { _count: { select: { users: true, assets: true, tickets: true } } },
+  });
+  if (!location) throw HttpError.notFound('Ubicacion no encontrada');
+  if (location._count.users || location._count.assets || location._count.tickets) {
+    throw HttpError.conflict('No se puede eliminar una ubicacion que tiene usuarios, activos o tickets asociados');
+  }
+
+  await prisma.location.delete({ where: { id } });
+  await registrarAuditoria(organizationId, userId, AuditAction.UBICACION_ELIMINADA, id, ipAddress);
 }

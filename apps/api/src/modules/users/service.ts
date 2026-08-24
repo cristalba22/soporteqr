@@ -77,6 +77,21 @@ export async function updateUser(
   const existente = await prisma.user.findFirst({ where: { id, organizationId } });
   if (!existente) throw HttpError.notFound('Usuario no encontrado');
 
+  const pierdeAccesoAdministrador =
+    existente.role === 'ADMINISTRADOR' &&
+    (input.activo === false || (input.role !== undefined && input.role !== 'ADMINISTRADOR'));
+  if (id === actorId && pierdeAccesoAdministrador) {
+    throw HttpError.conflict('No puedes quitar tu propio acceso de administrador');
+  }
+  if (pierdeAccesoAdministrador) {
+    const administradoresActivos = await prisma.user.count({
+      where: { organizationId, role: 'ADMINISTRADOR', activo: true },
+    });
+    if (administradoresActivos <= 1) {
+      throw HttpError.conflict('La organizacion debe conservar al menos un administrador activo');
+    }
+  }
+
   const user = await prisma.user.update({
     where: { id },
     data: {

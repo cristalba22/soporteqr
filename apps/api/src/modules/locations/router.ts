@@ -5,7 +5,7 @@ import { requireAuth, requireRole } from '../../middleware/auth.js';
 import { validate } from '../../middleware/validate.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { HttpError } from '../../utils/httpError.js';
-import { createLocation, getLocationById, listLocations, updateLocation } from './service.js';
+import { createLocation, deleteLocation, getLocationById, listLocations, updateLocation } from './service.js';
 
 export const locationsRouter = Router();
 
@@ -52,5 +52,17 @@ locationsRouter.patch(
     if (!id) throw HttpError.notFound('Ubicacion no encontrada');
     const ubicacion = await updateLocation(req.user.organizationId, req.user.id, id, req.body, req.ip);
     res.json({ location: ubicacion });
+  }),
+);
+
+locationsRouter.delete(
+  '/:id',
+  requireRole('ADMINISTRADOR'),
+  asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) throw HttpError.unauthorized();
+    const { id } = req.params;
+    if (!id) throw HttpError.notFound('Ubicacion no encontrada');
+    await deleteLocation(req.user.organizationId, req.user.id, id, req.ip);
+    res.status(204).send();
   }),
 );

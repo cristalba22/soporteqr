@@ -13,6 +13,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', roles: [UserRole.ADMINISTRADOR, UserRole.TECNICO] },
   { to: '/', label: 'Tickets' },
   { to: '/activos', label: 'Activos', roles: [UserRole.ADMINISTRADOR, UserRole.TECNICO] },
+  { to: '/administracion', label: 'Administracion', roles: [UserRole.ADMINISTRADOR] },
 ];
 
 const ROLE_LABELS: Record<UserRole, string> = {

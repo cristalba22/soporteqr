@@ -51,4 +51,12 @@ describe('endpoints publicos del sistema', () => {
       expect(response.headers['access-control-allow-origin']).toBe(origin);
     }
   });
+
+  it('protege las bajas administrativas sin autenticacion', async () => {
+    const locationResponse = await request(app).delete('/api/locations/00000000-0000-0000-0000-000000000000');
+    const categoryResponse = await request(app).delete('/api/categories/00000000-0000-0000-0000-000000000000');
+
+    expect(locationResponse.status).toBe(401);
+    expect(categoryResponse.status).toBe(401);
+  });
 });

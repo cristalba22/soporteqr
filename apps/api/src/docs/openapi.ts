@@ -316,6 +316,7 @@ export const openApiSpec = swaggerJsdoc({
       '/api/locations/{id}': {
         get: { tags: ['Ubicaciones'], summary: 'Consultar ubicacion', security: bearerSecurity, parameters: [idParameter], responses: { '200': entityResponse('location', 'Location') } },
         patch: { tags: ['Ubicaciones'], summary: 'Actualizar ubicacion (administrador)', security: bearerSecurity, parameters: [idParameter], responses: { '200': entityResponse('location', 'Location') } },
+        delete: { tags: ['Ubicaciones'], summary: 'Eliminar ubicacion sin dependencias (administrador)', security: bearerSecurity, parameters: [idParameter], responses: { '204': response('Ubicacion eliminada'), '409': response('La ubicacion tiene elementos asociados') } },
       },
       '/api/categories': {
         get: { tags: ['Categorias'], summary: 'Listar categorias', security: bearerSecurity, responses: { '200': response('Listado de categorias') } },
@@ -324,6 +325,7 @@ export const openApiSpec = swaggerJsdoc({
       '/api/categories/{id}': {
         get: { tags: ['Categorias'], summary: 'Consultar categoria', security: bearerSecurity, parameters: [idParameter], responses: { '200': entityResponse('category', 'Category') } },
         patch: { tags: ['Categorias'], summary: 'Actualizar categoria (administrador)', security: bearerSecurity, parameters: [idParameter], responses: { '200': entityResponse('category', 'Category') } },
+        delete: { tags: ['Categorias'], summary: 'Eliminar categoria sin tickets (administrador)', security: bearerSecurity, parameters: [idParameter], responses: { '204': response('Categoria eliminada'), '409': response('La categoria tiene tickets asociados') } },
       },
       '/api/users': {
         get: { tags: ['Usuarios'], summary: 'Listar usuarios (administrador)', security: bearerSecurity, responses: { '200': response('Listado de usuarios') } },

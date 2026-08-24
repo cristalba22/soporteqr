@@ -4,6 +4,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from './layouts/AppLayout';
 import { AuthLayout } from './layouts/AuthLayout';
 import { AssetsPage } from './pages/AssetsPage';
+import { AdminPage } from './pages/AdminPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
 import { ReportarPage } from './pages/ReportarPage';
@@ -32,6 +33,9 @@ export function App() {
           </Route>
           <Route element={<RoleRoute roles={[UserRole.ADMINISTRADOR, UserRole.TECNICO]} />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+          </Route>
+          <Route element={<RoleRoute roles={[UserRole.ADMINISTRADOR]} />}>
+            <Route path="/administracion" element={<AdminPage />} />
           </Route>
         </Route>
       </Route>

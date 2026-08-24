@@ -1,4 +1,4 @@
-import type { AssetStatus, CreateAssetInput, TicketPriority, TicketStatus } from '@soporteqr/shared';
+import type { AssetStatus, CreateAssetInput, TicketPriority, TicketStatus, UserRole } from '@soporteqr/shared';
 
 const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL || `${window.location.protocol}//${window.location.hostname}:4000`
@@ -88,6 +88,7 @@ export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body?: unknown) => request<T>(path, { method: 'POST', body }),
   patch: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PATCH', body }),
+  delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
 };
 
 export interface AssetListItem {
@@ -106,6 +107,24 @@ export interface AssetListItem {
 export interface LocationOption {
   id: string;
   nombre: string;
+  direccion?: string | null;
+  _count?: { users: number; assets: number; tickets: number };
+}
+
+export interface CategoryAdmin {
+  id: string;
+  nombre: string;
+  descripcion: string | null;
+  _count: { tickets: number };
+}
+
+export interface UserAdmin {
+  id: string;
+  nombre: string;
+  email: string;
+  role: UserRole;
+  activo: boolean;
+  locationId: string | null;
 }
 
 export async function getAssets(): Promise<AssetListItem[]> {
@@ -116,6 +135,54 @@ export async function getAssets(): Promise<AssetListItem[]> {
 export async function getLocations(): Promise<LocationOption[]> {
   const data = await api.get<{ locations: LocationOption[] }>('/api/locations');
   return data.locations;
+}
+
+export async function getCategories(): Promise<CategoryAdmin[]> {
+  const data = await api.get<{ categories: CategoryAdmin[] }>('/api/categories');
+  return data.categories;
+}
+
+export async function getUsers(): Promise<UserAdmin[]> {
+  const data = await api.get<{ users: UserAdmin[] }>('/api/users');
+  return data.users;
+}
+
+export async function createLocation(input: { nombre: string; direccion?: string }): Promise<LocationOption> {
+  const data = await api.post<{ location: LocationOption }>('/api/locations', input);
+  return data.location;
+}
+
+export async function updateLocation(id: string, input: { nombre: string; direccion?: string }): Promise<LocationOption> {
+  const data = await api.patch<{ location: LocationOption }>(`/api/locations/${id}`, input);
+  return data.location;
+}
+
+export function deleteLocation(id: string): Promise<void> {
+  return api.delete<void>(`/api/locations/${id}`);
+}
+
+export async function createCategory(input: { nombre: string; descripcion?: string }): Promise<CategoryAdmin> {
+  const data = await api.post<{ category: CategoryAdmin }>('/api/categories', input);
+  return data.category;
+}
+
+export async function updateCategory(id: string, input: { nombre: string; descripcion?: string }): Promise<CategoryAdmin> {
+  const data = await api.patch<{ category: CategoryAdmin }>(`/api/categories/${id}`, input);
+  return data.category;
+}
+
+export function deleteCategory(id: string): Promise<void> {
+  return api.delete<void>(`/api/categories/${id}`);
+}
+
+export async function createUser(input: { nombre: string; email: string; password: string; role: UserRole; locationId?: string | null }): Promise<UserAdmin> {
+  const data = await api.post<{ user: UserAdmin }>('/api/users', input);
+  return data.user;
+}
+
+export async function updateUser(id: string, input: { nombre?: string; role?: UserRole; locationId?: string | null; activo?: boolean }): Promise<UserAdmin> {
+  const data = await api.patch<{ user: UserAdmin }>(`/api/users/${id}`, input);
+  return data.user;
 }
 
 export async function createAsset(input: CreateAssetInput): Promise<AssetListItem> {

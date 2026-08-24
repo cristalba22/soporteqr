@@ -18,6 +18,7 @@ async function registrarAuditoria(
 export async function listCategories(organizationId: string) {
   return prisma.category.findMany({
     where: { organizationId },
+    include: { _count: { select: { tickets: true } } },
     orderBy: { nombre: 'asc' },
   });
 }
@@ -64,4 +65,23 @@ export async function updateCategory(
   });
   await registrarAuditoria(organizationId, userId, AuditAction.CATEGORIA_ACTUALIZADA, category.id, ipAddress);
   return category;
+}
+
+export async function deleteCategory(
+  organizationId: string,
+  userId: string,
+  id: string,
+  ipAddress?: string,
+): Promise<void> {
+  const category = await prisma.category.findFirst({
+    where: { id, organizationId },
+    include: { _count: { select: { tickets: true } } },
+  });
+  if (!category) throw HttpError.notFound('Categoria no encontrada');
+  if (category._count.tickets) {
+    throw HttpError.conflict('No se puede eliminar una categoria utilizada por tickets');
+  }
+
+  await prisma.category.delete({ where: { id } });
+  await registrarAuditoria(organizationId, userId, AuditAction.CATEGORIA_ELIMINADA, id, ipAddress);
 }

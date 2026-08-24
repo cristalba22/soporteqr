@@ -1,4 +1,6 @@
+import { UserRole } from '@soporteqr/shared';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import {
   Bar,
   BarChart,
@@ -12,6 +14,7 @@ import {
 } from 'recharts';
 
 import { getDashboardSummary } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 import { ESTADO_LABELS, PRIORIDAD_LABELS } from '../lib/labels';
 
 function KpiCard({ etiqueta, valor }: { etiqueta: string; valor: string }) {
@@ -36,6 +39,7 @@ const formatMes = (mes: string) =>
   new Date(mes).toLocaleDateString('es-AR', { month: 'short', year: 'numeric' });
 
 export function DashboardPage() {
+  const { user } = useAuth();
   const { data, isLoading, isError } = useQuery({
     queryKey: ['dashboard'],
     queryFn: getDashboardSummary,
@@ -62,17 +66,31 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-marino-950">Dashboard</h1>
-        <p className="mt-1 text-sm text-grafito-500">Panorama general de tickets y activos</p>
-      </div>
+      <header className="flex flex-col gap-4 rounded-2xl bg-marino-950 p-6 text-white shadow-panel sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <span className="inline-flex items-center gap-2 rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+            <span className="h-2 w-2 rounded-full bg-emerald-400" /> Datos operativos en tiempo real
+          </span>
+          <h1 className="mt-3 text-2xl font-semibold">Centro de operaciones</h1>
+          <p className="mt-1 text-sm text-marino-200">Rendimiento del soporte y salud del parque tecnologico</p>
+        </div>
+        {user?.role === UserRole.ADMINISTRADOR && (
+          <Link to="/administracion" className="rounded-lg bg-turquesa-500 px-4 py-2.5 text-center text-sm font-semibold text-marino-950 hover:bg-turquesa-400">
+            Abrir administracion
+          </Link>
+        )}
+      </header>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard etiqueta="Tickets abiertos" valor={String(data.ticketsAbiertos)} />
         <KpiCard etiqueta="Tickets resueltos" valor={String(data.ticketsResueltos)} />
         <KpiCard
           etiqueta="Tiempo promedio de resolucion"
           valor={`${data.tiempoPromedioResolucionHoras} h`}
+        />
+        <KpiCard
+          etiqueta="Tasa de resolucion"
+          valor={`${Math.round((data.ticketsResueltos / Math.max(1, data.ticketsAbiertos + data.ticketsResueltos)) * 100)}%`}
         />
       </div>
 
