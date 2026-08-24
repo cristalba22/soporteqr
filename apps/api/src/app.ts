@@ -20,12 +20,15 @@ import { dashboardRouter } from './modules/dashboard/router.js';
 
 export function createApp(): Express {
   const app = express();
+  const allowedOrigins = env.CORS_ORIGIN.split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 
   app.disable('x-powered-by');
   app.use(helmet());
   app.use(
     cors({
-      origin: env.CORS_ORIGIN,
+      origin: allowedOrigins,
       credentials: true,
     }),
   );

@@ -39,4 +39,16 @@ describe('endpoints publicos del sistema', () => {
     expect(response.status).toBe(200);
     expect(response.text).toContain('SoporteQR API');
   });
+
+  it('permite el frontend local tanto por localhost como por 127.0.0.1', async () => {
+    for (const origin of ['http://localhost:5173', 'http://127.0.0.1:5173']) {
+      const response = await request(app)
+        .options('/api/auth/login')
+        .set('Origin', origin)
+        .set('Access-Control-Request-Method', 'POST');
+
+      expect(response.status).toBe(204);
+      expect(response.headers['access-control-allow-origin']).toBe(origin);
+    }
+  });
 });
