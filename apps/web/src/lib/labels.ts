@@ -32,6 +32,22 @@ export const PRIORIDAD_CLASSES: Record<TicketPriority, string> = {
   [TicketPriority.CRITICA]: 'bg-red-100 text-red-700',
 };
 
+export const ESTADO_HEX: Record<TicketStatus, string> = {
+  [TicketStatus.NUEVO]: '#2f4a7a',
+  [TicketStatus.ASIGNADO]: '#1fc7b6',
+  [TicketStatus.EN_PROGRESO]: '#f59e0b',
+  [TicketStatus.ESPERANDO_USUARIO]: '#8b5cf6',
+  [TicketStatus.RESUELTO]: '#10b981',
+  [TicketStatus.CERRADO]: '#8b96aa',
+};
+
+export const PRIORIDAD_HEX: Record<TicketPriority, string> = {
+  [TicketPriority.BAJA]: '#8b96aa',
+  [TicketPriority.MEDIA]: '#1fc7b6',
+  [TicketPriority.ALTA]: '#f59e0b',
+  [TicketPriority.CRITICA]: '#ef4444',
+};
+
 export const ASSET_ESTADO_LABELS: Record<AssetStatus, string> = {
   [AssetStatus.ACTIVO]: 'Activo',
   [AssetStatus.EN_REPARACION]: 'En reparacion',
