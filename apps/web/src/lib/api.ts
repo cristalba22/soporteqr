@@ -197,6 +197,14 @@ export function getAssetQrUrl(publicAssetCode: string): string {
 export interface DashboardSummary {
   ticketsAbiertos: number;
   ticketsResueltos: number;
+  criticosAbiertos: number;
+  sinAsignar: number;
+  esperandoUsuario: number;
+  sinActividad: number;
+  creadosUltimos30: number;
+  variacionCreados: number | null;
+  resueltosUltimos30: number;
+  variacionResueltos: number | null;
   tiempoPromedioResolucionHoras: number;
   distribucionPorEstado: Array<{ estado: TicketStatus; total: number }>;
   distribucionPorPrioridad: Array<{ prioridad: TicketPriority; total: number }>;
@@ -204,6 +212,18 @@ export interface DashboardSummary {
   activosConMasIncidencias: Array<{ assetId: string; codigoInterno: string; tipo: string; total: number }>;
   cargaPorTecnico: Array<{ technicianId: string | null; nombre: string; total: number }>;
   evolucionMensual: Array<{ mes: string; total: number }>;
+  atencionPrioritaria: Array<{
+    id: string;
+    numero: string;
+    titulo: string;
+    prioridad: TicketPriority;
+    estado: TicketStatus;
+    createdAt: string;
+    updatedAt: string;
+    assetCode: string;
+    location: string;
+    motivo: string;
+  }>;
 }
 
 export function getDashboardSummary(): Promise<DashboardSummary> {

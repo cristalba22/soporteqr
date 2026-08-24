@@ -12,14 +12,15 @@ vi.mock('../context/AuthContext', () => ({
 }));
 vi.mock('recharts', () => ({
   ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  BarChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  LineChart: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  BarChart: () => <div />,
+  AreaChart: () => <div />,
   CartesianGrid: () => <div />,
   XAxis: () => <div />,
   YAxis: () => <div />,
   Tooltip: () => <div />,
   Bar: () => <div />,
-  Line: () => <div />,
+  Area: () => <div />,
+  Cell: () => <div />,
 }));
 
 describe('DashboardPage', () => {
@@ -27,6 +28,14 @@ describe('DashboardPage', () => {
     dashboardMock.mockResolvedValueOnce({
       ticketsAbiertos: 9,
       ticketsResueltos: 6,
+      criticosAbiertos: 1,
+      sinAsignar: 2,
+      esperandoUsuario: 1,
+      sinActividad: 1,
+      creadosUltimos30: 9,
+      variacionCreados: -10,
+      resueltosUltimos30: 6,
+      variacionResueltos: 20,
       tiempoPromedioResolucionHoras: 48,
       distribucionPorEstado: [],
       distribucionPorPrioridad: [],
@@ -34,6 +43,7 @@ describe('DashboardPage', () => {
       activosConMasIncidencias: [],
       cargaPorTecnico: [],
       evolucionMensual: [],
+      atencionPrioritaria: [],
     });
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
@@ -43,11 +53,10 @@ describe('DashboardPage', () => {
       </QueryClientProvider>,
     );
 
-    expect(await screen.findByRole('heading', { name: 'Centro de operaciones' })).toBeInTheDocument();
-    expect(screen.getByText('9')).toBeInTheDocument();
-    expect(screen.getByText('6')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Pulso operativo' })).toBeInTheDocument();
+    expect(screen.getByText('Próxima mejor acción')).toBeInTheDocument();
+    expect(screen.getByText('Críticos abiertos')).toBeInTheDocument();
     expect(screen.getByText('48 h')).toBeInTheDocument();
-    expect(screen.getByText('40%')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Abrir administracion' })).toHaveAttribute('href', '/administracion');
+    expect(screen.getByRole('link', { name: /Administrar sistema/ })).toHaveAttribute('href', '/administracion');
   });
 });

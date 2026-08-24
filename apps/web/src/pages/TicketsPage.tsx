@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { TicketPriority, TicketStatus } from '@soporteqr/shared';
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';
 import { api } from '../lib/api';
@@ -32,10 +31,26 @@ const PRIORIDADES = Object.values(TicketPriority);
 
 export function TicketsPage() {
   const { user } = useAuth();
-  const [estado, setEstado] = useState('');
-  const [prioridad, setPrioridad] = useState('');
-  const [page, setPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const estado = searchParams.get('estado') ?? '';
+  const prioridad = searchParams.get('prioridad') ?? '';
+  const page = Math.max(1, Number(searchParams.get('page')) || 1);
   const pageSize = 20;
+
+  const updateFilter = (key: 'estado' | 'prioridad', value: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set(key, value);
+    else next.delete(key);
+    next.delete('page');
+    setSearchParams(next);
+  };
+
+  const updatePage = (nextPage: number) => {
+    const next = new URLSearchParams(searchParams);
+    if (nextPage > 1) next.set('page', String(nextPage));
+    else next.delete('page');
+    setSearchParams(next);
+  };
 
   const params = new URLSearchParams();
   if (estado) params.set('estado', estado);
@@ -72,10 +87,7 @@ export function TicketsPage() {
       <div className="flex flex-wrap gap-3">
         <select
           value={estado}
-          onChange={(e) => {
-            setEstado(e.target.value);
-            setPage(1);
-          }}
+          onChange={(e) => updateFilter('estado', e.target.value)}
           className="rounded-lg border border-grafito-300 bg-white px-3 py-2 text-sm text-marino-800 outline-none focus:border-turquesa-500"
         >
           <option value="">Todos los estados</option>
@@ -87,10 +99,7 @@ export function TicketsPage() {
         </select>
         <select
           value={prioridad}
-          onChange={(e) => {
-            setPrioridad(e.target.value);
-            setPage(1);
-          }}
+          onChange={(e) => updateFilter('prioridad', e.target.value)}
           className="rounded-lg border border-grafito-300 bg-white px-3 py-2 text-sm text-marino-800 outline-none focus:border-turquesa-500"
         >
           <option value="">Todas las prioridades</option>
@@ -165,7 +174,7 @@ export function TicketsPage() {
             <button
               type="button"
               disabled={page <= 1}
-              onClick={() => setPage((p) => p - 1)}
+              onClick={() => updatePage(page - 1)}
               className="rounded-lg border border-grafito-300 px-3 py-1.5 font-medium text-marino-800 disabled:opacity-40"
             >
               Anterior
@@ -173,7 +182,7 @@ export function TicketsPage() {
             <button
               type="button"
               disabled={page >= totalPaginas}
-              onClick={() => setPage((p) => p + 1)}
+              onClick={() => updatePage(page + 1)}
               className="rounded-lg border border-grafito-300 px-3 py-1.5 font-medium text-marino-800 disabled:opacity-40"
             >
               Siguiente

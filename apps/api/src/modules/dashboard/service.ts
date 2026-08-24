@@ -1,6 +1,11 @@
 import { prisma } from '../../lib/prisma.js';
 
 export async function getDashboardSummary(organizationId: string) {
+  const ahora = new Date();
+  const hace24Horas = new Date(ahora.getTime() - 24 * 60 * 60 * 1000);
+  const hace30Dias = new Date(ahora.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const hace60Dias = new Date(ahora.getTime() - 60 * 24 * 60 * 60 * 1000);
+  const estadosCerrados = ['RESUELTO', 'CERRADO'] as const;
   const [
     porEstado,
     porPrioridad,
@@ -9,6 +14,15 @@ export async function getDashboardSummary(organizationId: string) {
     cargaPorTecnico,
     resueltos,
     evolucionMensual,
+    criticosAbiertos,
+    sinAsignar,
+    esperandoUsuario,
+    sinActividad,
+    creadosUltimos30,
+    creados30Anteriores,
+    resueltosUltimos30,
+    resueltos30Anteriores,
+    ticketsAbiertosDetalle,
   ] = await Promise.all([
     prisma.ticket.groupBy({
       by: ['estado'],
@@ -48,6 +62,35 @@ export async function getDashboardSummary(organizationId: string) {
       GROUP BY mes
       ORDER BY mes ASC
     `,
+    prisma.ticket.count({
+      where: { organizationId, prioridad: 'CRITICA', estado: { notIn: [...estadosCerrados] } },
+    }),
+    prisma.ticket.count({
+      where: { organizationId, technicianId: null, estado: { notIn: [...estadosCerrados] } },
+    }),
+    prisma.ticket.count({ where: { organizationId, estado: 'ESPERANDO_USUARIO' } }),
+    prisma.ticket.count({
+      where: { organizationId, updatedAt: { lt: hace24Horas }, estado: { notIn: [...estadosCerrados] } },
+    }),
+    prisma.ticket.count({ where: { organizationId, createdAt: { gte: hace30Dias } } }),
+    prisma.ticket.count({ where: { organizationId, createdAt: { gte: hace60Dias, lt: hace30Dias } } }),
+    prisma.ticket.count({ where: { organizationId, resueltoAt: { gte: hace30Dias } } }),
+    prisma.ticket.count({ where: { organizationId, resueltoAt: { gte: hace60Dias, lt: hace30Dias } } }),
+    prisma.ticket.findMany({
+      where: { organizationId, estado: { notIn: [...estadosCerrados] } },
+      select: {
+        id: true,
+        numero: true,
+        titulo: true,
+        prioridad: true,
+        estado: true,
+        technicianId: true,
+        createdAt: true,
+        updatedAt: true,
+        asset: { select: { codigoInterno: true } },
+        location: { select: { nombre: true } },
+      },
+    }),
   ]);
 
   const categoriaIds = porCategoria.map((c) => c.categoryId).filter((id): id is string => id !== null);
@@ -77,9 +120,49 @@ export async function getDashboardSummary(organizationId: string) {
     .filter((e) => e.estado === 'RESUELTO' || e.estado === 'CERRADO')
     .reduce((acc, e) => acc + e._count._all, 0);
 
+  const variacion = (actual: number, anterior: number) =>
+    anterior === 0 ? null : Math.round(((actual - anterior) / anterior) * 100);
+  const pesoPrioridad = { CRITICA: 4, ALTA: 3, MEDIA: 2, BAJA: 1 } as const;
+  const atencionPrioritaria = ticketsAbiertosDetalle
+    .filter(
+      (ticket) =>
+        ticket.prioridad === 'CRITICA' || ticket.technicianId === null || ticket.updatedAt < hace24Horas,
+    )
+    .sort((a, b) => {
+      const diferenciaPrioridad = pesoPrioridad[b.prioridad] - pesoPrioridad[a.prioridad];
+      return diferenciaPrioridad || a.updatedAt.getTime() - b.updatedAt.getTime();
+    })
+    .slice(0, 3)
+    .map((ticket) => ({
+      id: ticket.id,
+      numero: ticket.numero,
+      titulo: ticket.titulo,
+      prioridad: ticket.prioridad,
+      estado: ticket.estado,
+      createdAt: ticket.createdAt,
+      updatedAt: ticket.updatedAt,
+      assetCode: ticket.asset.codigoInterno,
+      location: ticket.location.nombre,
+      motivo:
+        ticket.prioridad === 'CRITICA'
+          ? 'Prioridad critica'
+          : ticket.technicianId === null
+            ? 'Sin tecnico asignado'
+            : 'Sin actividad hace mas de 24 h',
+    }));
+
   return {
     ticketsAbiertos,
     ticketsResueltos,
+    criticosAbiertos,
+    sinAsignar,
+    esperandoUsuario,
+    sinActividad,
+    creadosUltimos30,
+    variacionCreados: variacion(creadosUltimos30, creados30Anteriores),
+    resueltosUltimos30,
+    variacionResueltos: variacion(resueltosUltimos30, resueltos30Anteriores),
+    atencionPrioritaria,
     tiempoPromedioResolucionHoras: Math.round(tiempoPromedioResolucionHoras * 100) / 100,
     distribucionPorEstado: porEstado.map((e) => ({ estado: e.estado, total: e._count._all })),
     distribucionPorPrioridad: porPrioridad.map((p) => ({ prioridad: p.prioridad, total: p._count._all })),
