@@ -22,7 +22,7 @@ export const PRIORIDAD_LABELS: Record<TicketPriority, string> = {
   [TicketPriority.BAJA]: 'Baja',
   [TicketPriority.MEDIA]: 'Media',
   [TicketPriority.ALTA]: 'Alta',
-  [TicketPriority.CRITICA]: 'Critica',
+  [TicketPriority.CRITICA]: 'Crítica',
 };
 
 export const PRIORIDAD_CLASSES: Record<TicketPriority, string> = {
@@ -50,9 +50,9 @@ export const PRIORIDAD_HEX: Record<TicketPriority, string> = {
 
 export const ASSET_ESTADO_LABELS: Record<AssetStatus, string> = {
   [AssetStatus.ACTIVO]: 'Activo',
-  [AssetStatus.EN_REPARACION]: 'En reparacion',
+  [AssetStatus.EN_REPARACION]: 'En reparación',
   [AssetStatus.DE_BAJA]: 'De baja',
-  [AssetStatus.EN_DEPOSITO]: 'En deposito',
+  [AssetStatus.EN_DEPOSITO]: 'En depósito',
 };
 
 export function formatFecha(value: string | Date): string {

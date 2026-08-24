@@ -71,10 +71,34 @@ const tiempoRelativo = (fecha: string) => {
 
 export function DashboardPage() {
   const { user } = useAuth();
-  const { data, isLoading, isError } = useQuery({ queryKey: ['dashboard'], queryFn: getDashboardSummary });
+  const { data, isLoading, isError, refetch, isFetching } = useQuery({ queryKey: ['dashboard'], queryFn: getDashboardSummary });
 
-  if (isLoading) return <p className="text-sm text-grafito-500">Calculando el pulso operativo...</p>;
-  if (isError || !data) return <p className="text-sm text-red-600">No se pudo calcular el pulso operativo.</p>;
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {[0, 1, 2].map((key) => (
+          <div key={key} className="h-28 animate-pulse rounded-xl bg-grafito-100" />
+        ))}
+        <p className="col-span-full text-sm text-grafito-500">Calculando el pulso operativo...</p>
+      </div>
+    );
+  }
+
+  if (isError || !data) {
+    return (
+      <div className="flex flex-col items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-6">
+        <p className="text-sm font-medium text-red-700">No se pudo calcular el pulso operativo.</p>
+        <button
+          type="button"
+          onClick={() => void refetch()}
+          disabled={isFetching}
+          className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
+        >
+          {isFetching ? 'Reintentando...' : 'Reintentar'}
+        </button>
+      </div>
+    );
+  }
 
   const porEstado = data.distribucionPorEstado.map((item) => ({ key: item.estado, nombre: ESTADO_LABELS[item.estado], total: item.total, color: ESTADO_HEX[item.estado] }));
   const porPrioridad = data.distribucionPorPrioridad.map((item) => ({ key: item.prioridad, nombre: PRIORIDAD_LABELS[item.prioridad], total: item.total, color: PRIORIDAD_HEX[item.prioridad] }));

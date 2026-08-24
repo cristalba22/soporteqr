@@ -13,12 +13,12 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', roles: [UserRole.ADMINISTRADOR, UserRole.TECNICO] },
   { to: '/', label: 'Tickets' },
   { to: '/activos', label: 'Activos', roles: [UserRole.ADMINISTRADOR, UserRole.TECNICO] },
-  { to: '/administracion', label: 'Administracion', roles: [UserRole.ADMINISTRADOR] },
+  { to: '/administracion', label: 'Administración', roles: [UserRole.ADMINISTRADOR] },
 ];
 
 const ROLE_LABELS: Record<UserRole, string> = {
   [UserRole.EMPLEADO]: 'Empleado',
-  [UserRole.TECNICO]: 'Tecnico',
+  [UserRole.TECNICO]: 'Técnico',
   [UserRole.ADMINISTRADOR]: 'Administrador',
 };
 
@@ -65,7 +65,7 @@ export function AppLayout() {
             onClick={() => void logout()}
             className="mt-3 w-full rounded-lg border border-marino-800 px-3 py-2 text-xs font-semibold text-marino-200 transition-colors hover:border-turquesa-500 hover:text-turquesa-300"
           >
-            Cerrar sesion
+            Cerrar sesión
           </button>
         </div>
       </aside>
