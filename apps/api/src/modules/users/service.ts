@@ -36,6 +36,14 @@ export async function listUsers(organizationId: string) {
   });
 }
 
+export async function listActiveTechnicians(organizationId: string) {
+  return prisma.user.findMany({
+    where: { organizationId, role: 'TECNICO', activo: true },
+    select: { id: true, nombre: true, role: true },
+    orderBy: { nombre: 'asc' },
+  });
+}
+
 export async function getUserByIdInOrganization(organizationId: string, id: string) {
   const user = await prisma.user.findFirst({ where: { id, organizationId }, select: userSelect });
   if (!user) throw HttpError.notFound('Usuario no encontrado');

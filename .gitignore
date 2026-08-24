@@ -5,6 +5,9 @@ playwright-report/
 test-results/
 uploads/
 apps/api/uploads/
+apps/api/uploads-test/
+apps/api/prisma/*.js
+apps/api/prisma/*.js.map
 *.tsbuildinfo
 apps/web/vite.config.js
 apps/web/vite.config.d.ts

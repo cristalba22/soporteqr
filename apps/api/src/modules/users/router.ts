@@ -5,11 +5,22 @@ import { requireAuth, requireRole } from '../../middleware/auth.js';
 import { validate } from '../../middleware/validate.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { HttpError } from '../../utils/httpError.js';
-import { createUser, getUserByIdInOrganization, listUsers, updateUser } from './service.js';
+import { createUser, getUserByIdInOrganization, listActiveTechnicians, listUsers, updateUser } from './service.js';
 
 export const usersRouter = Router();
 
 usersRouter.use(requireAuth);
+
+usersRouter.get(
+  '/technicians',
+  requireRole('TECNICO', 'ADMINISTRADOR'),
+  asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) throw HttpError.unauthorized();
+    const technicians = await listActiveTechnicians(req.user.organizationId);
+    res.json({ users: technicians });
+  }),
+);
+
 usersRouter.use(requireRole('ADMINISTRADOR'));
 
 usersRouter.get(

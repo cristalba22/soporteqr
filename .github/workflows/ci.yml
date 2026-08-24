@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: soporteqr
+          POSTGRES_PASSWORD: soporteqr_dev_password
+          POSTGRES_DB: soporteqr
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U soporteqr -d soporteqr"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      TEST_DATABASE_URL: postgresql://soporteqr:soporteqr_dev_password@localhost:5432/soporteqr?schema=integration_test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tests unitarios e integracion
+        run: npm run test
+
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Test E2E
+        run: npm run test:e2e
+
+      - name: Build
+        run: npm run build

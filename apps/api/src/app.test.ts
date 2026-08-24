@@ -1,18 +1,8 @@
 import request from 'supertest';
-import { beforeAll, describe, expect, it } from 'vitest';
-import type { Express } from 'express';
+import { describe, expect, it } from 'vitest';
+import { createApp } from './app.js';
 
-let app: Express;
-
-beforeAll(async () => {
-  process.env.NODE_ENV = 'test';
-  process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/soporteqr_test';
-  process.env.JWT_ACCESS_SECRET = 'test_access_secret_000000000000';
-  process.env.JWT_REFRESH_SECRET = 'test_refresh_secret_00000000000';
-
-  const appModule = await import('./app.js');
-  app = appModule.createApp();
-});
+const app = createApp();
 
 describe('endpoints publicos del sistema', () => {
   it('responde el control de salud sin consultar PostgreSQL', async () => {

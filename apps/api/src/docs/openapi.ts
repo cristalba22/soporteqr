@@ -331,6 +331,9 @@ export const openApiSpec = swaggerJsdoc({
         get: { tags: ['Usuarios'], summary: 'Listar usuarios (administrador)', security: bearerSecurity, responses: { '200': response('Listado de usuarios') } },
         post: { tags: ['Usuarios'], summary: 'Crear usuario (administrador)', security: bearerSecurity, responses: { '201': entityResponse('user', 'User') } },
       },
+      '/api/users/technicians': {
+        get: { tags: ['Usuarios'], summary: 'Listar tecnicos activos para asignacion', security: bearerSecurity, responses: { '200': response('Listado limitado de tecnicos') } },
+      },
       '/api/users/{id}': {
         get: { tags: ['Usuarios'], summary: 'Consultar usuario (administrador)', security: bearerSecurity, parameters: [idParameter], responses: { '200': entityResponse('user', 'User') } },
         patch: { tags: ['Usuarios'], summary: 'Actualizar usuario (administrador)', security: bearerSecurity, parameters: [idParameter], responses: { '200': entityResponse('user', 'User') } },

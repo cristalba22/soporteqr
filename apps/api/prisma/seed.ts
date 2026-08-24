@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
+import { pathToFileURL } from 'node:url';
+import { resolve } from 'node:path';
 import { hashPassword } from '../src/modules/auth/password.js';
-
-const prisma = new PrismaClient();
 
 const DEMO_PASSWORD = 'Demo1234!';
 
@@ -11,7 +11,9 @@ function daysAgo(dias: number): Date {
   return fecha;
 }
 
-async function main() {
+export async function seedDatabase(): Promise<void> {
+  const prisma = new PrismaClient();
+  try {
   await prisma.auditLog.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.ticketHistory.deleteMany();
@@ -321,13 +323,15 @@ async function main() {
   console.log(' - admin@soporteqr.demo (ADMINISTRADOR)');
   console.log(' - tecnico@soporteqr.demo (TECNICO)');
   console.log(' - empleado@soporteqr.demo (EMPLEADO)');
+  } finally {
+    await prisma.$disconnect();
+  }
 }
 
-main()
-  .catch((error) => {
+const isMain = process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url;
+if (isMain) {
+  seedDatabase().catch((error) => {
     console.error(error);
     process.exitCode = 1;
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
   });
+}

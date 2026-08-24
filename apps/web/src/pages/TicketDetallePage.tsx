@@ -95,7 +95,7 @@ export function TicketDetallePage() {
 
   const { data: usuarios } = useQuery({
     queryKey: ['usuarios'],
-    queryFn: () => api.get<{ users: Tecnico[] }>('/api/users'),
+    queryFn: () => api.get<{ users: Tecnico[] }>('/api/users/technicians'),
     enabled: esGestor,
   });
 
@@ -276,8 +276,9 @@ export function TicketDetallePage() {
           {!ticket.tecnico && (
             <div className="flex flex-wrap items-end gap-3">
               <div>
-                <label className="mb-1 block text-xs font-medium text-marino-800">Asignar tecnico</label>
+                <label htmlFor="technicianId" className="mb-1 block text-xs font-medium text-marino-800">Asignar tecnico</label>
                 <select
+                  id="technicianId"
                   value={tecnicoId}
                   onChange={(e) => setTecnicoId(e.target.value)}
                   className="rounded-lg border border-grafito-300 bg-white px-3 py-2 text-sm text-marino-900 outline-none focus:border-turquesa-500"
@@ -304,8 +305,9 @@ export function TicketDetallePage() {
           {transicionesValidas.length > 0 && (
             <div className="space-y-3 border-t border-grafito-200 pt-4">
               <div>
-                <label className="mb-1 block text-xs font-medium text-marino-800">Cambiar estado</label>
+                <label htmlFor="ticketStatus" className="mb-1 block text-xs font-medium text-marino-800">Cambiar estado</label>
                 <select
+                  id="ticketStatus"
                   value={estadoDestino}
                   onChange={(e) => setEstadoDestino(e.target.value)}
                   className="rounded-lg border border-grafito-300 bg-white px-3 py-2 text-sm text-marino-900 outline-none focus:border-turquesa-500"
