@@ -1,4 +1,4 @@
-import { TicketPriority, TicketStatus } from '@soporteqr/shared';
+import { TicketPriority, TicketStatus, UserRole } from '@soporteqr/shared';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 
@@ -45,6 +45,7 @@ function SlaBadge({ ticket }: { ticket: TicketListItem }) {
 
 export function TicketsPage() {
   const { user } = useAuth();
+  const esEmpleado = user?.role === UserRole.EMPLEADO;
   const [searchParams, setSearchParams] = useSearchParams();
   const estado = searchParams.get('estado') ?? '';
   const prioridad = searchParams.get('prioridad') ?? '';
@@ -54,6 +55,7 @@ export function TicketsPage() {
   const assetCode = searchParams.get('assetCode') ?? '';
   const page = Math.max(1, Number(searchParams.get('page')) || 1);
   const pageSize = 20;
+  const vista = searchParams.get('vista') === 'finalizados' ? 'FINALIZADOS' : searchParams.get('vista') === 'abiertos' ? 'ABIERTOS' : '';
 
   const updateFilter = (key: 'estado' | 'prioridad' | 'locationId' | 'categoryId', value: string) => {
     const next = new URLSearchParams(searchParams);
@@ -76,20 +78,40 @@ export function TicketsPage() {
     else next.delete('page');
     setSearchParams(next);
   };
+  const updateVista = (value: '' | 'ABIERTOS' | 'FINALIZADOS') => {
+    const next = new URLSearchParams();
+    if (value === 'ABIERTOS') next.set('vista', 'abiertos');
+    if (value === 'FINALIZADOS') next.set('vista', 'finalizados');
+    setSearchParams(next);
+  };
 
   const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
-  if (estado) params.set('estado', estado);
-  if (prioridad) params.set('prioridad', prioridad);
-  if (locationId) params.set('locationId', locationId);
-  if (categoryId) params.set('categoryId', categoryId);
-  if (assetId) params.set('assetId', assetId);
+  if (esEmpleado) {
+    if (vista) params.set('vista', vista);
+  } else {
+    if (estado) params.set('estado', estado);
+    if (prioridad) params.set('prioridad', prioridad);
+    if (locationId) params.set('locationId', locationId);
+    if (categoryId) params.set('categoryId', categoryId);
+    if (assetId) params.set('assetId', assetId);
+  }
 
   const ticketsQuery = useQuery({
-    queryKey: ['tickets', estado, prioridad, locationId, categoryId, assetId, page],
+    queryKey: ['tickets', esEmpleado ? 'empleado' : 'gestor', vista, estado, prioridad, locationId, categoryId, assetId, page],
     queryFn: () => api.get<TicketListResponse>(`/api/tickets?${params.toString()}`),
   });
-  const locationsQuery = useQuery({ queryKey: ['locations'], queryFn: getLocations });
-  const categoriesQuery = useQuery({ queryKey: ['admin-categories'], queryFn: getCategories });
+  const locationsQuery = useQuery({ queryKey: ['locations'], queryFn: getLocations, enabled: !esEmpleado });
+  const categoriesQuery = useQuery({ queryKey: ['admin-categories'], queryFn: getCategories, enabled: !esEmpleado });
+  const abiertosQuery = useQuery({
+    queryKey: ['tickets', 'empleado', 'resumen', 'abiertos'],
+    queryFn: () => api.get<TicketListResponse>('/api/tickets?vista=ABIERTOS&page=1&pageSize=1'),
+    enabled: esEmpleado,
+  });
+  const finalizadosQuery = useQuery({
+    queryKey: ['tickets', 'empleado', 'resumen', 'finalizados'],
+    queryFn: () => api.get<TicketListResponse>('/api/tickets?vista=FINALIZADOS&page=1&pageSize=1'),
+    enabled: esEmpleado,
+  });
   const data = ticketsQuery.data;
   const totalPaginas = data ? Math.max(1, Math.ceil(data.total / pageSize)) : 1;
   const abiertosVisibles = data?.tickets.filter((ticket) => !ESTADOS_CERRADOS.has(ticket.estado)).length ?? 0;
@@ -97,6 +119,24 @@ export function TicketsPage() {
   const sinAsignarVisibles = data?.tickets.filter((ticket) => !ticket.tecnico && !ESTADOS_CERRADOS.has(ticket.estado)).length ?? 0;
   const filtrosActivos = [estado, prioridad, locationId, categoryId, assetId].filter(Boolean).length;
   const dashboardUrl = locationId ? `/dashboard?rango=30d&locationId=${encodeURIComponent(locationId)}` : '/dashboard?rango=30d';
+
+  if (esEmpleado) {
+    return (
+      <EmployeeTicketsView
+        data={data}
+        isLoading={ticketsQuery.isLoading}
+        isError={ticketsQuery.isError}
+        vista={vista}
+        onVistaChange={updateVista}
+        abiertos={abiertosQuery.data?.total ?? 0}
+        finalizados={finalizadosQuery.data?.total ?? 0}
+        page={page}
+        totalPaginas={totalPaginas}
+        pageSize={pageSize}
+        onPageChange={updatePage}
+      />
+    );
+  }
 
   return (
     <div className="space-y-5 pb-8">
@@ -151,6 +191,83 @@ export function TicketsPage() {
       </section>
 
       {data && data.total > pageSize && <div className="flex items-center justify-between text-sm text-grafito-500"><span>Página {page} de {totalPaginas}</span><div className="flex gap-2"><button type="button" disabled={page <= 1} onClick={() => updatePage(page - 1)} className="rounded-lg border border-grafito-300 px-3 py-1.5 font-medium text-marino-800 disabled:opacity-40">Anterior</button><button type="button" disabled={page >= totalPaginas} onClick={() => updatePage(page + 1)} className="rounded-lg border border-grafito-300 px-3 py-1.5 font-medium text-marino-800 disabled:opacity-40">Siguiente</button></div></div>}
+    </div>
+  );
+}
+
+function EmployeeTicketsView({
+  data,
+  isLoading,
+  isError,
+  vista,
+  onVistaChange,
+  abiertos,
+  finalizados,
+  page,
+  totalPaginas,
+  pageSize,
+  onPageChange,
+}: {
+  data?: TicketListResponse;
+  isLoading: boolean;
+  isError: boolean;
+  vista: '' | 'ABIERTOS' | 'FINALIZADOS';
+  onVistaChange: (value: '' | 'ABIERTOS' | 'FINALIZADOS') => void;
+  abiertos: number;
+  finalizados: number;
+  page: number;
+  totalPaginas: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+}) {
+  return (
+    <div className="space-y-5 pb-8">
+      <header className="flex flex-col gap-5 rounded-3xl bg-marino-950 p-6 text-white shadow-panel sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-turquesa-300">Seguimiento personal</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight">Mis solicitudes</h1>
+          <p className="mt-1 max-w-xl text-sm text-marino-200">Acá aparecen únicamente los incidentes que cargaste vos y su avance.</p>
+        </div>
+        <Link to="/tickets/nuevo" className="rounded-xl bg-turquesa-500 px-4 py-2.5 text-center text-sm font-semibold text-marino-950 hover:bg-turquesa-400">Reportar un problema</Link>
+      </header>
+
+      <section className="grid gap-3 sm:grid-cols-3">
+        <QueueMetric label="Mis solicitudes" value={abiertos + finalizados} detail="Historial personal" color="bg-marino-600" />
+        <QueueMetric label="En seguimiento" value={abiertos} detail="Pendientes o en proceso" color="bg-turquesa-500" />
+        <QueueMetric label="Finalizadas" value={finalizados} detail="Resueltas o cerradas" color="bg-emerald-500" />
+      </section>
+
+      <section aria-label="Filtrar mis solicitudes" className="flex flex-wrap gap-2 rounded-2xl border border-grafito-200 bg-white p-3 shadow-panel">
+        {([
+          ['', 'Todas'],
+          ['ABIERTOS', 'En seguimiento'],
+          ['FINALIZADOS', 'Finalizadas'],
+        ] as const).map(([value, label]) => (
+          <button key={value || 'todas'} type="button" onClick={() => onVistaChange(value)} className={`rounded-xl px-4 py-2 text-sm font-semibold ${vista === value ? 'bg-marino-950 text-white' : 'text-grafito-600 hover:bg-grafito-100'}`}>{label}</button>
+        ))}
+      </section>
+
+      <section className="overflow-hidden rounded-2xl border border-grafito-200 bg-white shadow-panel">
+        <div className="flex items-center justify-between border-b border-grafito-200 px-5 py-4">
+          <div><h2 className="font-semibold text-marino-950">Historial</h2><p className="text-xs text-grafito-500">Ordenado desde el más reciente</p></div>
+          {data && <span className="rounded-full bg-grafito-100 px-3 py-1 text-xs font-semibold text-grafito-600">{data.total} solicitudes</span>}
+        </div>
+        {isLoading && <div className="space-y-3 p-5">{[1, 2, 3].map((item) => <div key={item} className="h-24 animate-pulse rounded-xl bg-grafito-100" />)}</div>}
+        {isError && <p className="p-6 text-sm text-red-600">No pudimos cargar tus solicitudes.</p>}
+        {data?.tickets.length === 0 && <div className="p-10 text-center"><p className="font-semibold text-marino-900">No hay solicitudes en esta vista</p><p className="mt-1 text-sm text-grafito-500">Cuando reportes un problema vas a poder seguirlo desde acá.</p><Link to="/tickets/nuevo" className="mt-4 inline-flex rounded-xl bg-turquesa-500 px-4 py-2 text-sm font-semibold text-marino-950">Crear mi primera solicitud</Link></div>}
+        {data && data.tickets.length > 0 && <div className="divide-y divide-grafito-200">{data.tickets.map((ticket) => (
+          <Link key={ticket.id} to={`/tickets/${ticket.id}`} className="grid gap-4 p-5 transition-colors hover:bg-grafito-100/60 sm:grid-cols-[1fr_auto] sm:items-center">
+            <div>
+              <div className="flex flex-wrap items-center gap-2"><span className="font-mono text-[11px] text-grafito-500">{ticket.numero}</span><span className={`rounded-full border px-2 py-1 text-[10px] font-semibold ${ESTADO_CLASSES[ticket.estado]}`}>{ESTADO_LABELS[ticket.estado]}</span></div>
+              <h3 className="mt-2 font-semibold text-marino-950">{ticket.titulo}</h3>
+              <p className="mt-1 text-sm text-grafito-500">{ticket.asset.tipo} · {ticket.asset.codigoInterno} · {ticket.location.nombre}</p>
+            </div>
+            <div className="sm:text-right"><p className="text-xs text-grafito-500">Creado el</p><p className="mt-1 text-sm font-medium text-marino-800">{new Intl.DateTimeFormat('es-AR', { dateStyle: 'medium' }).format(new Date(ticket.createdAt))}</p><p className="mt-2 text-xs font-semibold text-turquesa-700">Ver seguimiento →</p></div>
+          </Link>
+        ))}</div>}
+      </section>
+
+      {data && data.total > pageSize && <div className="flex items-center justify-between text-sm text-grafito-500"><span>Página {page} de {totalPaginas}</span><div className="flex gap-2"><button type="button" disabled={page <= 1} onClick={() => onPageChange(page - 1)} className="rounded-lg border border-grafito-300 px-3 py-1.5 font-medium text-marino-800 disabled:opacity-40">Anterior</button><button type="button" disabled={page >= totalPaginas} onClick={() => onPageChange(page + 1)} className="rounded-lg border border-grafito-300 px-3 py-1.5 font-medium text-marino-800 disabled:opacity-40">Siguiente</button></div></div>}
     </div>
   );
 }

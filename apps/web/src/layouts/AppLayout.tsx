@@ -59,7 +59,7 @@ export function AppLayout() {
               }`
             }
           >
-            {item.label}
+            {item.to === '/' && user?.role === UserRole.EMPLEADO ? 'Mis solicitudes' : item.label}
           </NavLink>
         ))}
       </nav>

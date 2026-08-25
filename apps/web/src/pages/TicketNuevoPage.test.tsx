@@ -34,6 +34,7 @@ describe('TicketNuevoPage', () => {
     );
 
     await screen.findByRole('option', { name: 'Hardware' });
+    expect(screen.getByRole('button', { name: /Escanear QR con la camara/ })).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Titulo'), { target: { value: 'Equipo sin respuesta' } });
     fireEvent.change(screen.getByLabelText('Descripcion'), { target: { value: 'El equipo no responde desde esta mañana.' } });
     fireEvent.change(screen.getByLabelText('¿A cuantas personas afecta?'), { target: { value: 'SECTOR' } });

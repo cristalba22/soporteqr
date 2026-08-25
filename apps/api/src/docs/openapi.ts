@@ -258,6 +258,7 @@ export const openApiSpec = swaggerJsdoc({
           tags: ['Tickets'], summary: 'Listar tickets visibles para el usuario', security: bearerSecurity,
           parameters: [
             { name: 'estado', in: 'query', schema: { type: 'string' } },
+            { name: 'vista', in: 'query', schema: { type: 'string', enum: ['ABIERTOS', 'FINALIZADOS'] }, description: 'Agrupacion simple para el historial del empleado' },
             { name: 'prioridad', in: 'query', schema: { type: 'string' } },
             { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } },
             { name: 'pageSize', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 } },

@@ -1,10 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createTicketSchema, TicketImpact, type CreateTicketInput } from '@soporteqr/shared';
 import { useQuery } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 
 import { api, ApiError } from '../lib/api';
+import { QrScanner } from '../components/QrScanner';
 
 interface Categoria {
   id: string;
@@ -33,6 +35,8 @@ export function TicketNuevoPage() {
     register,
     handleSubmit,
     setError,
+    setValue,
+    clearErrors,
     watch,
     formState: { errors, isSubmitting },
   } = useForm<CreateTicketInput>({
@@ -47,6 +51,10 @@ export function TicketNuevoPage() {
   });
 
   const codigoActivo = watch('assetPublicCode');
+  const onQrDetectado = useCallback((code: string) => {
+    setValue('assetPublicCode', code, { shouldDirty: true, shouldValidate: true });
+    clearErrors('assetPublicCode');
+  }, [clearErrors, setValue]);
   const { data: asset } = useQuery({
     queryKey: ['asset-resuelto', codigoActivo],
     queryFn: () => api.get<{ asset: AssetPublico }>(`/api/assets/resolver/${encodeURIComponent(codigoActivo)}`),
@@ -88,6 +96,7 @@ export function TicketNuevoPage() {
           {errors.assetPublicCode && (
             <p className="mt-1 text-xs text-red-600">{errors.assetPublicCode.message}</p>
           )}
+          <QrScanner onDetected={onQrDetectado} />
           {asset && (
             <p className="mt-2 rounded-lg bg-grafito-100 px-3 py-2 text-xs text-grafito-500">
               {asset.asset.tipo} {asset.asset.marca ?? ''} {asset.asset.modelo ?? ''} · {asset.asset.location.nombre}

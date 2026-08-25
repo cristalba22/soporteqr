@@ -19,6 +19,7 @@ import type {
   UpdateTicketPriorityInput,
 } from '@soporteqr/shared';
 import { prisma } from '../../lib/prisma.js';
+import type { Prisma } from '@prisma/client';
 import { HttpError } from '../../utils/httpError.js';
 import { calcularPrioridad, sugerirCategoria } from './triage.js';
 
@@ -57,14 +58,19 @@ function accesoTicket(organizationId: string, userId: string, role: UserRole) {
 }
 
 export async function listTickets(organizationId: string, userId: string, role: UserRole, filtro: TicketFilterInput) {
-  const where = {
+  const estadoPorVista = filtro.vista === 'ABIERTOS'
+    ? { notIn: ['RESUELTO', 'CERRADO'] as const }
+    : filtro.vista === 'FINALIZADOS'
+      ? { in: ['RESUELTO', 'CERRADO'] as const }
+      : undefined;
+  const where: Prisma.TicketWhereInput = {
     ...accesoTicket(organizationId, userId, role),
-    estado: filtro.estado as never,
-    prioridad: filtro.prioridad as never,
-    categoryId: filtro.categoryId,
-    locationId: filtro.locationId,
-    assetId: filtro.assetId,
-    technicianId: filtro.technicianId,
+    ...(filtro.estado ? { estado: filtro.estado as never } : estadoPorVista ? { estado: estadoPorVista as never } : {}),
+    ...(filtro.prioridad ? { prioridad: filtro.prioridad as never } : {}),
+    ...(filtro.categoryId ? { categoryId: filtro.categoryId } : {}),
+    ...(filtro.locationId ? { locationId: filtro.locationId } : {}),
+    ...(filtro.assetId ? { assetId: filtro.assetId } : {}),
+    ...(filtro.technicianId ? { technicianId: filtro.technicianId } : {}),
   };
 
   const [tickets, total] = await Promise.all([

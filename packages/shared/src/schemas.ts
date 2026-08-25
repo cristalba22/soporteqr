@@ -108,6 +108,7 @@ export type CreateCommentInput = z.infer<typeof createCommentSchema>;
 
 export const ticketFilterSchema = z.object({
   estado: z.enum(TICKET_STATUSES as [string, ...string[]]).optional(),
+  vista: z.enum(['ABIERTOS', 'FINALIZADOS']).optional(),
   prioridad: z.enum(TICKET_PRIORITIES as [string, ...string[]]).optional(),
   categoryId: z.string().uuid().optional(),
   locationId: z.string().uuid().optional(),

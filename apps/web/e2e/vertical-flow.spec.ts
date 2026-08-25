@@ -17,7 +17,10 @@ async function logout(page: import('@playwright/test').Page) {
 
 test('empleado crea, tecnico resuelve y empleado recibe la notificacion', async ({ page, request }) => {
   await login(page, 'empleado@soporteqr.demo');
+  await expect(page.getByRole('heading', { name: 'Mis solicitudes' })).toBeVisible();
+  await expect(page.getByText(/únicamente los incidentes que cargaste vos/)).toBeVisible();
   await page.goto('/tickets/nuevo?activo=AST0001');
+  await expect(page.getByRole('button', { name: /Escanear QR con la camara/ })).toBeVisible();
   await page.getByLabel('Titulo').fill('Flujo E2E desde Playwright');
   await page.getByLabel('Descripcion').fill('Incidencia creada en navegador para comprobar el flujo vertical completo.');
   await page.getByLabel('¿A cuantas personas afecta?').selectOption('SECTOR');

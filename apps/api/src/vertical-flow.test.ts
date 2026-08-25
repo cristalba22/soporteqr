@@ -17,13 +17,15 @@ const auth = (token: string) => ({ Authorization: `Bearer ${token}` });
 
 describe('flujo vertical completo de SoporteQR', () => {
   it('conecta empleado, tecnico y administrador desde el ticket hasta auditoria', async () => {
-    const [employee, technician, administrator] = await Promise.all([
+    const [employee, otherEmployee, technician, administrator] = await Promise.all([
       login('empleado@soporteqr.demo'),
+      login('empleado2@soporteqr.demo'),
       login('tecnico@soporteqr.demo'),
       login('admin@soporteqr.demo'),
     ]);
 
     expect(employee.user.role).toBe('EMPLEADO');
+    expect(otherEmployee.user.role).toBe('EMPLEADO');
     expect(technician.user.role).toBe('TECNICO');
     expect(administrator.user.role).toBe('ADMINISTRADOR');
 
@@ -50,6 +52,18 @@ describe('flujo vertical completo de SoporteQR', () => {
     const ticketId = created.body.ticket.id as string;
     expect(created.body.ticket.prioridad).toBe('ALTA');
     expect(created.body.ticket.prioridadCalculada).toBe('ALTA');
+
+    await request(app)
+      .get(`/api/tickets/${ticketId}`)
+      .set(auth(otherEmployee.accessToken))
+      .expect(404);
+    const otherEmployeeTickets = await request(app)
+      .get('/api/tickets?pageSize=100')
+      .set(auth(otherEmployee.accessToken))
+      .expect(200);
+    expect(otherEmployeeTickets.body.tickets).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: ticketId })]),
+    );
 
     const reprioritized = await request(app)
       .post(`/api/tickets/${ticketId}/prioridad`)
