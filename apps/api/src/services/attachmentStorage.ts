@@ -5,8 +5,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
-import { constants } from 'node:fs';
-import { access, mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { env } from '../config/env.js';
@@ -116,7 +115,9 @@ export async function checkAttachmentStorage(): Promise<void> {
   }
   const base = resolve(env.UPLOAD_DIR);
   await mkdir(base, { recursive: true });
-  await access(base, constants.R_OK | constants.W_OK);
+  const probe = localPath(`.readiness-${randomUUID()}`);
+  await writeFile(probe, '', { flag: 'wx' });
+  await unlink(probe);
 }
 
 export function attachmentStorageName(): 'local' | 'r2' {
