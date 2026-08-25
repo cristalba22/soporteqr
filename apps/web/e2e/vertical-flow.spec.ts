@@ -30,7 +30,7 @@ test('empleado crea, tecnico resuelve y empleado recibe la notificacion', async 
   await logout(page);
   await login(page, 'tecnico@soporteqr.demo');
   await page.goto(ticketUrl);
-  await page.getByLabel('Asignar tecnico').selectOption({ label: 'Tomás Técnico' });
+  await page.getByLabel('Asignar tecnico').selectOption({ label: 'Martín Gaitán' });
   await page.getByRole('button', { name: 'Asignar', exact: true }).click();
   await expect(page.getByText('Asignado', { exact: true }).first()).toBeVisible();
 

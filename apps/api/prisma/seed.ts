@@ -42,7 +42,7 @@ export async function seedDatabase(): Promise<void> {
   const admin = await prisma.user.create({
     data: {
       organizationId: organization.id,
-      nombre: 'Ana Administradora',
+      nombre: 'Luciana Ferreyra',
       email: 'admin@soporteqr.demo',
       passwordHash,
       role: 'ADMINISTRADOR',
@@ -53,7 +53,7 @@ export async function seedDatabase(): Promise<void> {
   const tecnico = await prisma.user.create({
     data: {
       organizationId: organization.id,
-      nombre: 'Tomás Técnico',
+      nombre: 'Martín Gaitán',
       email: 'tecnico@soporteqr.demo',
       passwordHash,
       role: 'TECNICO',
@@ -64,7 +64,7 @@ export async function seedDatabase(): Promise<void> {
   const tecnico2 = await prisma.user.create({
     data: {
       organizationId: organization.id,
-      nombre: 'Valeria Soporte',
+      nombre: 'Paula Roldán',
       email: 'tecnico2@soporteqr.demo',
       passwordHash,
       role: 'TECNICO',
@@ -75,7 +75,7 @@ export async function seedDatabase(): Promise<void> {
   const empleado = await prisma.user.create({
     data: {
       organizationId: organization.id,
-      nombre: 'Emilia Empleada',
+      nombre: 'Valentina Suárez',
       email: 'empleado@soporteqr.demo',
       passwordHash,
       role: 'EMPLEADO',
@@ -86,7 +86,7 @@ export async function seedDatabase(): Promise<void> {
   const empleado2 = await prisma.user.create({
     data: {
       organizationId: organization.id,
-      nombre: 'Ezequiel Empleado',
+      nombre: 'Nicolás Ponce',
       email: 'empleado2@soporteqr.demo',
       passwordHash,
       role: 'EMPLEADO',
@@ -119,7 +119,7 @@ export async function seedDatabase(): Promise<void> {
 
   const activos = [];
   for (let i = 0; i < activosDatos.length; i++) {
-    const d = activosDatos[i];
+    const d = activosDatos[i]!;
     const activo = await prisma.asset.create({
       data: {
         organizationId: organization.id,
@@ -180,10 +180,10 @@ export async function seedDatabase(): Promise<void> {
     const numero = `SOP-${anio}-${String(numeroSecuencial).padStart(4, '0')}`;
     numeroSecuencial += 1;
 
-    const asset = activos[t.assetIdx];
-    const reportante = reportantes[t.reporterIdx];
+    const asset = activos[t.assetIdx]!;
+    const reportante = reportantes[t.reporterIdx]!;
     const tecnicoAsignado = t.tecnicoIdx !== null ? tecnicos[t.tecnicoIdx] : null;
-    const categoria = categorias[t.categoriaIdx];
+    const categoria = categorias[t.categoriaIdx]!;
     const creado = daysAgo(t.diasAtras);
     const resuelto = t.estado === 'RESUELTO' || t.estado === 'CERRADO' ? daysAgo(Math.max(t.diasAtras - 2, 0)) : null;
     const cerrado = t.estado === 'CERRADO' ? daysAgo(Math.max(t.diasAtras - 1, 0)) : null;
