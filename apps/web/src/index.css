@@ -21,3 +21,23 @@
     border-radius: 9999px;
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #etiqueta-qr,
+  #etiqueta-qr * {
+    visibility: visible;
+  }
+
+  #etiqueta-qr {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 90mm;
+    min-height: 55mm;
+    border: 1px solid #111827;
+    box-shadow: none;
+  }
+}

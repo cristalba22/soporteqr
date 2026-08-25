@@ -44,6 +44,7 @@ export async function getAssetById(organizationId: string, id: string) {
     include: {
       location: true,
       tickets: { orderBy: { createdAt: 'desc' }, take: 20 },
+      _count: { select: { tickets: true } },
     },
   });
   if (!asset) throw HttpError.notFound('Activo no encontrado');

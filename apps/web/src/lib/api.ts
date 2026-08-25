@@ -104,6 +104,23 @@ export interface AssetListItem {
   _count: { tickets: number };
 }
 
+export interface AssetDetail extends AssetListItem {
+  fechaAdquisicion: string | null;
+  ultimoMantenimiento: string | null;
+  notas: string | null;
+  createdAt: string;
+  updatedAt: string;
+  tickets: Array<{
+    id: string;
+    numero: string;
+    titulo: string;
+    estado: TicketStatus;
+    prioridad: TicketPriority;
+    createdAt: string;
+    resueltoAt?: string | null;
+  }>;
+}
+
 export interface LocationOption {
   id: string;
   nombre: string;
@@ -130,6 +147,11 @@ export interface UserAdmin {
 export async function getAssets(): Promise<AssetListItem[]> {
   const data = await api.get<{ assets: AssetListItem[] }>('/api/assets');
   return data.assets;
+}
+
+export async function getAsset(id: string): Promise<AssetDetail> {
+  const data = await api.get<{ asset: AssetDetail }>(`/api/assets/${id}`);
+  return data.asset;
 }
 
 export async function getLocations(): Promise<LocationOption[]> {
@@ -196,6 +218,10 @@ export async function updateAsset(id: string, input: UpdateAssetInput): Promise<
 
 export function getAssetQrUrl(publicAssetCode: string): string {
   return `${API_BASE_URL}/api/assets/publico/${encodeURIComponent(publicAssetCode)}/qr`;
+}
+
+export function getAssetQrDownloadUrl(publicAssetCode: string): string {
+  return `${getAssetQrUrl(publicAssetCode)}?download=1`;
 }
 
 export interface DashboardSummary {

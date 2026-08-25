@@ -40,6 +40,7 @@ cp .env.example apps/api/.env
 Abrir:
 
 - Frontend: [http://localhost:5173](http://localhost:5173)
+- Presentación pública: [http://localhost:5173/presentacion](http://localhost:5173/presentacion)
 - API: [http://localhost:4000/api/health](http://localhost:4000/api/health)
 - Swagger: [http://localhost:4000/api/docs](http://localhost:4000/api/docs)
 
@@ -113,7 +114,7 @@ El modelo de datos y los límites de seguridad están detallados en [docs/archit
 
 ## Despliegue
 
-Para producción se recomienda separar frontend, API, PostgreSQL y almacenamiento de adjuntos. Configurar secretos reales, HTTPS, `NODE_ENV=production`, un origen CORS único y almacenamiento persistente. Aplicar migraciones con `npm run db:deploy`; no ejecutar el seed demo.
+Para producción se recomienda separar frontend, API, PostgreSQL y almacenamiento de adjuntos. Configurar secretos reales, HTTPS, `NODE_ENV=production`, un origen CORS único y almacenamiento persistente. Aplicar migraciones con `npm run db:deploy`; no ejecutar el seed demo. La arquitectura y la lista de control para publicar la demostración están en [docs/deployment-demo.md](docs/deployment-demo.md), junto con un [guion reproducible de cinco minutos](docs/demo-5-minutos.md).
 
 ## Estructura
 
