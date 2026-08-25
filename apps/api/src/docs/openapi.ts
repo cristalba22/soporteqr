@@ -110,6 +110,8 @@ export const openApiSpec = swaggerJsdoc({
               enum: ['NUEVO', 'ASIGNADO', 'EN_PROGRESO', 'ESPERANDO_USUARIO', 'RESUELTO', 'CERRADO'],
             },
             prioridad: { type: 'string', enum: ['BAJA', 'MEDIA', 'ALTA', 'CRITICA'] },
+            prioridadCalculada: { type: 'string', enum: ['BAJA', 'MEDIA', 'ALTA', 'CRITICA'] },
+            prioridadMotivo: { type: 'string', nullable: true },
             assetId: { type: 'string', format: 'uuid' },
             reporterId: { type: 'string', format: 'uuid' },
             technicianId: { type: 'string', format: 'uuid', nullable: true },
@@ -146,9 +148,12 @@ export const openApiSpec = swaggerJsdoc({
           properties: {
             titulo: { type: 'string', minLength: 4, maxLength: 150 },
             descripcion: { type: 'string', minLength: 10, maxLength: 3000 },
-            assetPublicCode: { type: 'string' },
+            assetPublicCode: { type: 'string', description: 'Codigo QR publico o codigo interno del activo' },
             categoryId: { type: 'string', format: 'uuid', nullable: true },
-            prioridad: { type: 'string', enum: ['BAJA', 'MEDIA', 'ALTA', 'CRITICA'], default: 'MEDIA' },
+            impacto: { type: 'string', enum: ['PERSONA', 'SECTOR', 'ORGANIZACION'], default: 'PERSONA' },
+            servicioInterrumpido: { type: 'boolean', default: false },
+            tieneAlternativa: { type: 'boolean', default: true },
+            riesgoSeguridad: { type: 'boolean', default: false },
           },
         },
       },
@@ -230,6 +235,13 @@ export const openApiSpec = swaggerJsdoc({
           responses: { '201': entityResponse('asset', 'Asset'), '403': { $ref: '#/components/responses/Forbidden' } },
         },
       },
+      '/api/assets/resolver/{code}': {
+        get: {
+          tags: ['Activos'], summary: 'Resolver un codigo QR o interno dentro de la organizacion', security: bearerSecurity,
+          parameters: [{ name: 'code', in: 'path', required: true, schema: { type: 'string' } }],
+          responses: { '200': entityResponse('asset', 'Asset'), '404': { $ref: '#/components/responses/NotFound' } },
+        },
+      },
       '/api/assets/{id}': {
         get: {
           tags: ['Activos'], summary: 'Consultar activo', security: bearerSecurity, parameters: [idParameter],
@@ -277,6 +289,19 @@ export const openApiSpec = swaggerJsdoc({
           requestBody: jsonBody({
             type: 'object', required: ['estado'],
             properties: { estado: { type: 'string' }, diagnostico: { type: 'string' }, solucion: { type: 'string' } },
+          }),
+          responses: { '200': entityResponse('ticket', 'Ticket'), '403': { $ref: '#/components/responses/Forbidden' } },
+        },
+      },
+      '/api/tickets/{id}/prioridad': {
+        post: {
+          tags: ['Tickets'], summary: 'Ajustar prioridad con justificacion (tecnico o administrador)', security: bearerSecurity, parameters: [idParameter],
+          requestBody: jsonBody({
+            type: 'object', required: ['prioridad', 'motivo'],
+            properties: {
+              prioridad: { type: 'string', enum: ['BAJA', 'MEDIA', 'ALTA', 'CRITICA'] },
+              motivo: { type: 'string', minLength: 10, maxLength: 500 },
+            },
           }),
           responses: { '200': entityResponse('ticket', 'Ticket'), '403': { $ref: '#/components/responses/Forbidden' } },
         },

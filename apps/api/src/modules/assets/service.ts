@@ -68,6 +68,29 @@ export async function getAssetByPublicCode(publicAssetCode: string) {
   return asset;
 }
 
+export async function resolveAssetCode(organizationId: string, code: string) {
+  const asset = await prisma.asset.findFirst({
+    where: {
+      organizationId,
+      OR: [
+        { publicAssetCode: { equals: code, mode: 'insensitive' } },
+        { codigoInterno: { equals: code, mode: 'insensitive' } },
+      ],
+    },
+    select: {
+      publicAssetCode: true,
+      codigoInterno: true,
+      tipo: true,
+      marca: true,
+      modelo: true,
+      estado: true,
+      location: { select: { nombre: true } },
+    },
+  });
+  if (!asset) throw HttpError.notFound('Activo no encontrado');
+  return asset;
+}
+
 export async function createAsset(
   organizationId: string,
   userId: string,

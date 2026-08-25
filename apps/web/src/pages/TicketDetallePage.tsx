@@ -3,6 +3,7 @@ import {
   createCommentSchema,
   TICKET_STATUS_TRANSITIONS,
   TicketStatus,
+  TicketPriority,
   UserRole,
   type CreateCommentInput,
 } from '@soporteqr/shared';
@@ -53,6 +54,8 @@ interface TicketDetalle {
   descripcion: string;
   estado: TicketStatus;
   prioridad: 'BAJA' | 'MEDIA' | 'ALTA' | 'CRITICA';
+  prioridadCalculada: TicketPriority;
+  prioridadMotivo: string | null;
   diagnostico: string | null;
   solucion: string | null;
   createdAt: string;
@@ -86,6 +89,8 @@ export function TicketDetallePage() {
   const [guardando, setGuardando] = useState(false);
   const [archivo, setArchivo] = useState<File | null>(null);
   const [subiendoArchivo, setSubiendoArchivo] = useState(false);
+  const [prioridadDestino, setPrioridadDestino] = useState('');
+  const [motivoPrioridad, setMotivoPrioridad] = useState('');
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['ticket', id],
@@ -175,6 +180,22 @@ export function TicketDetallePage() {
     }
   };
 
+  const onCambiarPrioridad = async () => {
+    if (!id || !prioridadDestino || motivoPrioridad.trim().length < 10) return;
+    setErrorAccion(null);
+    setGuardando(true);
+    try {
+      await api.post(`/api/tickets/${id}/prioridad`, { prioridad: prioridadDestino, motivo: motivoPrioridad });
+      setPrioridadDestino('');
+      setMotivoPrioridad('');
+      await queryClient.invalidateQueries({ queryKey: ['ticket', id] });
+    } catch (error) {
+      setErrorAccion(error instanceof ApiError ? error.message : 'No se pudo ajustar la prioridad');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
   if (isLoading) return <p className="text-sm text-grafito-500">Cargando ticket...</p>;
   if (isError || !ticket) return <p className="text-sm text-red-600">No se pudo cargar el ticket.</p>;
 
@@ -197,6 +218,14 @@ export function TicketDetallePage() {
         </div>
 
         <p className="mt-3 whitespace-pre-wrap text-sm text-marino-800">{ticket.descripcion}</p>
+
+        {ticket.prioridadMotivo && (
+          <div className="mt-4 rounded-lg border border-turquesa-500/20 bg-turquesa-500/5 px-3 py-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-turquesa-600">Prioridad calculada: {PRIORIDAD_LABELS[ticket.prioridadCalculada]}</p>
+            <p className="mt-1 text-sm text-marino-800">{ticket.prioridadMotivo}</p>
+            {ticket.prioridad !== ticket.prioridadCalculada && <p className="mt-1 text-xs text-amber-700">La prioridad actual fue ajustada por un gestor. El motivo figura en el historial.</p>}
+          </div>
+        )}
 
         <div className="mt-5 grid grid-cols-2 gap-4 border-t border-grafito-200 pt-4 text-sm sm:grid-cols-3">
           <div>
@@ -301,6 +330,18 @@ export function TicketDetallePage() {
               </button>
             </div>
           )}
+
+          <div className="space-y-3 border-t border-grafito-200 pt-4">
+            <p className="text-xs font-medium text-marino-800">Ajustar prioridad (requiere justificacion)</p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[180px_1fr_auto]">
+              <select value={prioridadDestino} onChange={(event) => setPrioridadDestino(event.target.value)} aria-label="Nueva prioridad" className="rounded-lg border border-grafito-300 bg-white px-3 py-2 text-sm text-marino-900">
+                <option value="">Seleccionar...</option>
+                {Object.values(TicketPriority).filter((value) => value !== ticket.prioridad).map((value) => <option key={value} value={value}>{PRIORIDAD_LABELS[value]}</option>)}
+              </select>
+              <input value={motivoPrioridad} onChange={(event) => setMotivoPrioridad(event.target.value)} placeholder="Motivo concreto del ajuste" aria-label="Motivo del ajuste de prioridad" className="rounded-lg border border-grafito-300 px-3 py-2 text-sm text-marino-900" />
+              <button type="button" disabled={!prioridadDestino || motivoPrioridad.trim().length < 10 || guardando} onClick={() => void onCambiarPrioridad()} className="rounded-lg bg-marino-950 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Aplicar</button>
+            </div>
+          </div>
 
           {transicionesValidas.length > 0 && (
             <div className="space-y-3 border-t border-grafito-200 pt-4">

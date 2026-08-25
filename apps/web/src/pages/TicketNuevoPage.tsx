@@ -1,11 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createTicketSchema, TicketPriority, type CreateTicketInput } from '@soporteqr/shared';
+import { createTicketSchema, TicketImpact, type CreateTicketInput } from '@soporteqr/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 
 import { api, ApiError } from '../lib/api';
-import { PRIORIDAD_LABELS } from '../lib/labels';
 
 interface Categoria {
   id: string;
@@ -20,8 +19,6 @@ interface AssetPublico {
   location: { nombre: string };
 }
 
-const PRIORIDADES = Object.values(TicketPriority);
-
 export function TicketNuevoPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -32,21 +29,29 @@ export function TicketNuevoPage() {
     queryFn: () => api.get<{ categories: Categoria[] }>('/api/categories'),
   });
 
-  const { data: asset } = useQuery({
-    queryKey: ['asset-publico', assetCode],
-    queryFn: () => api.get<{ asset: AssetPublico }>(`/api/assets/publico/${assetCode}`),
-    enabled: assetCode.length > 0,
-    retry: false,
-  });
-
   const {
     register,
     handleSubmit,
     setError,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<CreateTicketInput>({
     resolver: zodResolver(createTicketSchema),
-    defaultValues: { assetPublicCode: assetCode, prioridad: TicketPriority.MEDIA },
+    defaultValues: {
+      assetPublicCode: assetCode,
+      impacto: TicketImpact.PERSONA,
+      servicioInterrumpido: false,
+      tieneAlternativa: true,
+      riesgoSeguridad: false,
+    },
+  });
+
+  const codigoActivo = watch('assetPublicCode');
+  const { data: asset } = useQuery({
+    queryKey: ['asset-resuelto', codigoActivo],
+    queryFn: () => api.get<{ asset: AssetPublico }>(`/api/assets/resolver/${encodeURIComponent(codigoActivo)}`),
+    enabled: codigoActivo.trim().length >= 4,
+    retry: false,
   });
 
   const onSubmit = async (data: CreateTicketInput) => {
@@ -73,7 +78,7 @@ export function TicketNuevoPage() {
       >
         <div>
           <label htmlFor="assetPublicCode" className="mb-1 block text-sm font-medium text-marino-800">
-            Codigo del activo
+            Codigo QR o codigo interno
           </label>
           <input
             id="assetPublicCode"
@@ -115,40 +120,50 @@ export function TicketNuevoPage() {
           {errors.descripcion && <p className="mt-1 text-xs text-red-600">{errors.descripcion.message}</p>}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="categoryId" className="mb-1 block text-sm font-medium text-marino-800">
+            Categoria (opcional)
+          </label>
+          <select
+            id="categoryId"
+            className="w-full rounded-lg border border-grafito-300 bg-white px-3 py-2 text-sm text-marino-900 outline-none focus:border-turquesa-500"
+            {...register('categoryId')}
+          >
+            <option value="">Detectar automaticamente</option>
+            {categorias?.categories.map((categoria) => (
+              <option key={categoria.id} value={categoria.id}>
+                {categoria.nombre}
+              </option>
+            ))}
+          </select>
+          {errors.categoryId && <p className="mt-1 text-xs text-red-600">{errors.categoryId.message}</p>}
+        </div>
+
+        <div className="rounded-xl border border-turquesa-500/25 bg-turquesa-500/5 p-4">
+          <div className="mb-4">
+            <p className="text-sm font-semibold text-marino-950">Evaluacion automatica del impacto</p>
+            <p className="mt-1 text-xs text-grafito-500">Responde estas preguntas. El sistema asignara la prioridad y dejara registrado el motivo.</p>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="categoryId" className="mb-1 block text-sm font-medium text-marino-800">
-              Categoria
+            <label htmlFor="impacto" className="mb-1 block text-sm font-medium text-marino-800">
+              ¿A cuantas personas afecta?
             </label>
             <select
-              id="categoryId"
+              id="impacto"
               className="w-full rounded-lg border border-grafito-300 bg-white px-3 py-2 text-sm text-marino-900 outline-none focus:border-turquesa-500"
-              {...register('categoryId')}
+              {...register('impacto')}
             >
-              <option value="">Sin categoria</option>
-              {categorias?.categories.map((categoria) => (
-                <option key={categoria.id} value={categoria.id}>
-                  {categoria.nombre}
-                </option>
-              ))}
+              <option value={TicketImpact.PERSONA}>Una persona</option>
+              <option value={TicketImpact.SECTOR}>Un sector completo</option>
+              <option value={TicketImpact.ORGANIZACION}>Toda la organizacion</option>
             </select>
           </div>
-
-          <div>
-            <label htmlFor="prioridad" className="mb-1 block text-sm font-medium text-marino-800">
-              Prioridad
-            </label>
-            <select
-              id="prioridad"
-              className="w-full rounded-lg border border-grafito-300 bg-white px-3 py-2 text-sm text-marino-900 outline-none focus:border-turquesa-500"
-              {...register('prioridad')}
-            >
-              {PRIORIDADES.map((value) => (
-                <option key={value} value={value}>
-                  {PRIORIDAD_LABELS[value]}
-                </option>
-              ))}
-            </select>
+          <div className="space-y-3 text-sm text-marino-800">
+            <label className="flex items-start gap-2"><input type="checkbox" className="mt-1" {...register('servicioInterrumpido')} /><span>El trabajo quedo detenido</span></label>
+            <label className="flex items-start gap-2"><input type="checkbox" className="mt-1" {...register('tieneAlternativa')} /><span>Hay otro equipo o forma de continuar</span></label>
+            <label className="flex items-start gap-2"><input type="checkbox" className="mt-1" {...register('riesgoSeguridad')} /><span>Existe riesgo electrico, de seguridad o de perdida de informacion</span></label>
+          </div>
           </div>
         </div>
 

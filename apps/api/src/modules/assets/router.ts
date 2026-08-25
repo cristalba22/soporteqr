@@ -8,7 +8,7 @@ import { requireAuth, requireRole } from '../../middleware/auth.js';
 import { validate } from '../../middleware/validate.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { HttpError } from '../../utils/httpError.js';
-import { createAsset, getAssetByPublicCode, getAssetById, listAssets, updateAsset } from './service.js';
+import { createAsset, getAssetByPublicCode, getAssetById, listAssets, resolveAssetCode, updateAsset } from './service.js';
 
 export const assetsRouter = Router();
 
@@ -39,6 +39,17 @@ assetsRouter.get(
 );
 
 assetsRouter.use(requireAuth);
+
+assetsRouter.get(
+  '/resolver/:code',
+  asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) throw HttpError.unauthorized();
+    const { code } = req.params;
+    if (!code) throw HttpError.notFound('Activo no encontrado');
+    const activo = await resolveAssetCode(req.user.organizationId, code);
+    res.json({ asset: activo });
+  }),
+);
 
 assetsRouter.get(
   '/',

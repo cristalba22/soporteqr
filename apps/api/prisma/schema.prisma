@@ -29,6 +29,12 @@ enum TicketPriority {
   CRITICA
 }
 
+enum TicketImpact {
+  PERSONA
+  SECTOR
+  ORGANIZACION
+}
+
 enum AssetStatus {
   ACTIVO
   EN_REPARACION
@@ -61,16 +67,16 @@ model Organization {
 }
 
 model User {
-  id           String   @id @default(uuid())
+  id             String   @id @default(uuid())
   organizationId String
-  nombre       String
-  email        String   @unique
-  passwordHash String
-  role         UserRole
-  activo       Boolean  @default(true)
-  locationId   String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  nombre         String
+  email          String   @unique
+  passwordHash   String
+  role           UserRole
+  activo         Boolean  @default(true)
+  locationId     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   location     Location?    @relation(fields: [locationId], references: [id])
@@ -119,21 +125,21 @@ model Category {
 }
 
 model Asset {
-  id                 String      @id @default(uuid())
-  organizationId     String
-  codigoInterno      String
-  publicAssetCode    String      @unique
-  tipo               String
-  marca              String?
-  modelo             String?
-  numeroSerie        String?
-  locationId         String
-  estado             AssetStatus @default(ACTIVO)
-  fechaAdquisicion   DateTime?
-  notas              String?
+  id                  String      @id @default(uuid())
+  organizationId      String
+  codigoInterno       String
+  publicAssetCode     String      @unique
+  tipo                String
+  marca               String?
+  modelo              String?
+  numeroSerie         String?
+  locationId          String
+  estado              AssetStatus @default(ACTIVO)
+  fechaAdquisicion    DateTime?
+  notas               String?
   ultimoMantenimiento DateTime?
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   location     Location     @relation(fields: [locationId], references: [id])
@@ -145,35 +151,42 @@ model Asset {
 }
 
 model Ticket {
-  id             String         @id @default(uuid())
-  organizationId String
-  numero         String         @unique
-  titulo         String
-  descripcion    String
-  assetId        String
-  reporterId     String
-  technicianId   String?
-  categoryId     String?
-  locationId     String
-  prioridad      TicketPriority @default(MEDIA)
-  estado         TicketStatus   @default(NUEVO)
-  diagnostico    String?
-  solucion       String?
-  createdAt      DateTime       @default(now())
-  primeraRespuestaAt DateTime?
-  resueltoAt     DateTime?
-  cerradoAt      DateTime?
-  updatedAt      DateTime       @updatedAt
+  id                   String         @id @default(uuid())
+  organizationId       String
+  numero               String         @unique
+  titulo               String
+  descripcion          String
+  assetId              String
+  reporterId           String
+  technicianId         String?
+  categoryId           String?
+  locationId           String
+  prioridad            TicketPriority @default(MEDIA)
+  prioridadCalculada   TicketPriority @default(MEDIA)
+  prioridadMotivo      String?
+  triageVersion        String         @default("rules-v1")
+  impacto              TicketImpact   @default(PERSONA)
+  servicioInterrumpido Boolean        @default(false)
+  tieneAlternativa     Boolean        @default(true)
+  riesgoSeguridad      Boolean        @default(false)
+  estado               TicketStatus   @default(NUEVO)
+  diagnostico          String?
+  solucion             String?
+  createdAt            DateTime       @default(now())
+  primeraRespuestaAt   DateTime?
+  resueltoAt           DateTime?
+  cerradoAt            DateTime?
+  updatedAt            DateTime       @updatedAt
 
-  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  asset        Asset           @relation(fields: [assetId], references: [id])
-  reportante   User            @relation("TicketReportante", fields: [reporterId], references: [id])
-  tecnico      User?           @relation("TicketTecnico", fields: [technicianId], references: [id])
-  categoria    Category?       @relation(fields: [categoryId], references: [id])
-  location     Location        @relation(fields: [locationId], references: [id])
-  comentarios  TicketComment[]
-  adjuntos     TicketAttachment[]
-  historial    TicketHistory[]
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  asset          Asset              @relation(fields: [assetId], references: [id])
+  reportante     User               @relation("TicketReportante", fields: [reporterId], references: [id])
+  tecnico        User?              @relation("TicketTecnico", fields: [technicianId], references: [id])
+  categoria      Category?          @relation(fields: [categoryId], references: [id])
+  location       Location           @relation(fields: [locationId], references: [id])
+  comentarios    TicketComment[]
+  adjuntos       TicketAttachment[]
+  historial      TicketHistory[]
   notificaciones Notification[]
 
   @@index([organizationId])
@@ -198,13 +211,13 @@ model TicketComment {
 }
 
 model TicketAttachment {
-  id         String   @id @default(uuid())
-  ticketId   String
-  fileName   String
-  mimeType   String
-  sizeBytes  Int
+  id          String   @id @default(uuid())
+  ticketId    String
+  fileName    String
+  mimeType    String
+  sizeBytes   Int
   storagePath String
-  createdAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
 
   ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
@@ -213,13 +226,13 @@ model TicketAttachment {
 }
 
 model TicketHistory {
-  id          String   @id @default(uuid())
-  ticketId    String
-  actorId     String
+  id             String        @id @default(uuid())
+  ticketId       String
+  actorId        String
   estadoAnterior TicketStatus?
   estadoNuevo    TicketStatus?
-  descripcion String
-  createdAt   DateTime @default(now())
+  descripcion    String
+  createdAt      DateTime      @default(now())
 
   ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   actor  User   @relation(fields: [actorId], references: [id])

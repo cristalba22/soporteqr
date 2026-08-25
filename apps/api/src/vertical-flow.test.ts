@@ -39,12 +39,24 @@ describe('flujo vertical completo de SoporteQR', () => {
       .send({
         titulo: 'Flujo vertical automatizado',
         descripcion: 'Incidencia creada por Supertest para validar el circuito completo.',
-        assetPublicCode: 'AST0001',
+        assetPublicCode: 'PC-001',
         categoryId: hardware.id,
-        prioridad: 'ALTA',
+        impacto: 'SECTOR',
+        servicioInterrumpido: true,
+        tieneAlternativa: false,
+        riesgoSeguridad: false,
       })
       .expect(201);
     const ticketId = created.body.ticket.id as string;
+    expect(created.body.ticket.prioridad).toBe('ALTA');
+    expect(created.body.ticket.prioridadCalculada).toBe('ALTA');
+
+    const reprioritized = await request(app)
+      .post(`/api/tickets/${ticketId}/prioridad`)
+      .set(auth(technician.accessToken))
+      .send({ prioridad: 'MEDIA', motivo: 'Se confirmo una alternativa operativa temporal.' })
+      .expect(200);
+    expect(reprioritized.body.ticket.prioridad).toBe('MEDIA');
 
     const assigned = await request(app)
       .post(`/api/tickets/${ticketId}/asignar`)
@@ -90,7 +102,7 @@ describe('flujo vertical completo de SoporteQR', () => {
       .map((item: { action: string }) => item.action);
 
     expect(ticketActions).toEqual(
-      expect.arrayContaining(['TICKET_CREADO', 'TICKET_ASIGNADO', 'TICKET_CAMBIO_ESTADO']),
+      expect.arrayContaining(['TICKET_CREADO', 'TICKET_PRIORIDAD_CAMBIADA', 'TICKET_ASIGNADO', 'TICKET_CAMBIO_ESTADO']),
     );
   });
 });

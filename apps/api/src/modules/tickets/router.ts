@@ -8,6 +8,7 @@ import {
   createTicketSchema,
   ticketFilterSchema,
   updateTicketStatusSchema,
+  updateTicketPrioritySchema,
 } from '@soporteqr/shared';
 import multer from 'multer';
 import { requireAuth, requireRole } from '../../middleware/auth.js';
@@ -23,6 +24,7 @@ import {
   getAttachment,
   listTickets,
   updateTicketStatus,
+  updateTicketPriority,
 } from './service.js';
 
 export const ticketsRouter = Router();
@@ -94,6 +96,19 @@ ticketsRouter.post(
     const { id } = req.params;
     if (!id) throw HttpError.notFound('Ticket no encontrado');
     const ticket = await updateTicketStatus(req.user.organizationId, req.user.id, id, req.body, req.ip);
+    res.json({ ticket });
+  }),
+);
+
+ticketsRouter.post(
+  '/:id/prioridad',
+  requireRole('TECNICO', 'ADMINISTRADOR'),
+  validate(updateTicketPrioritySchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) throw HttpError.unauthorized();
+    const { id } = req.params;
+    if (!id) throw HttpError.notFound('Ticket no encontrado');
+    const ticket = await updateTicketPriority(req.user.organizationId, req.user.id, id, req.body, req.ip);
     res.json({ ticket });
   }),
 );

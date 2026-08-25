@@ -16,9 +16,11 @@ import type {
   TicketFilterInput,
   TicketStatus,
   UpdateTicketStatusInput,
+  UpdateTicketPriorityInput,
 } from '@soporteqr/shared';
 import { prisma } from '../../lib/prisma.js';
 import { HttpError } from '../../utils/httpError.js';
+import { calcularPrioridad, sugerirCategoria } from './triage.js';
 
 async function registrarAuditoria(
   organizationId: string,
@@ -26,9 +28,10 @@ async function registrarAuditoria(
   action: string,
   entidadId: string | null,
   ipAddress?: string,
+  detalle?: Record<string, string | boolean>,
 ): Promise<void> {
   await prisma.auditLog.create({
-    data: { organizationId, userId, action, entidad: 'Ticket', entidadId, ipAddress },
+    data: { organizationId, userId, action, entidad: 'Ticket', entidadId, ipAddress, detalle },
   });
 }
 
@@ -103,13 +106,30 @@ export async function createTicket(
   ipAddress?: string,
 ) {
   const asset = await prisma.asset.findFirst({
-    where: { publicAssetCode: input.assetPublicCode, organizationId },
+    where: {
+      organizationId,
+      OR: [
+        { publicAssetCode: { equals: input.assetPublicCode, mode: 'insensitive' } },
+        { codigoInterno: { equals: input.assetPublicCode, mode: 'insensitive' } },
+      ],
+    },
   });
   if (!asset) throw HttpError.notFound('Activo no encontrado');
+  let categoryId = input.categoryId;
   if (input.categoryId) {
     const category = await prisma.category.findFirst({ where: { id: input.categoryId, organizationId } });
     if (!category) throw HttpError.badRequest('La categoria no pertenece a la organizacion');
+  } else {
+    const nombreSugerido = sugerirCategoria(input.titulo, input.descripcion, asset.tipo);
+    if (nombreSugerido) {
+      const category = await prisma.category.findFirst({
+        where: { organizationId, nombre: { equals: nombreSugerido, mode: 'insensitive' } },
+      });
+      categoryId = category?.id;
+    }
   }
+
+  const triage = calcularPrioridad(input, asset.tipo);
 
   const numero = await generarNumeroTicket(organizationId);
 
@@ -121,9 +141,16 @@ export async function createTicket(
       descripcion: input.descripcion,
       assetId: asset.id,
       reporterId,
-      categoryId: input.categoryId ?? undefined,
+      categoryId: categoryId ?? undefined,
       locationId: asset.locationId,
-      prioridad: input.prioridad as never,
+      prioridad: triage.prioridad as never,
+      prioridadCalculada: triage.prioridad as never,
+      prioridadMotivo: triage.motivo,
+      triageVersion: triage.version,
+      impacto: input.impacto as never,
+      servicioInterrumpido: input.servicioInterrumpido,
+      tieneAlternativa: input.tieneAlternativa,
+      riesgoSeguridad: input.riesgoSeguridad,
     },
     include: TICKET_INCLUDE,
   });
@@ -134,13 +161,56 @@ export async function createTicket(
       actorId: reporterId,
       estadoAnterior: null,
       estadoNuevo: 'NUEVO',
-      descripcion: 'Ticket creado',
+      descripcion: `Ticket creado. Prioridad ${triage.prioridad} calculada automaticamente: ${triage.motivo}`,
     },
   });
 
-  await registrarAuditoria(organizationId, reporterId, AuditAction.TICKET_CREADO, ticket.id, ipAddress);
+  await registrarAuditoria(organizationId, reporterId, AuditAction.TICKET_CREADO, ticket.id, ipAddress, {
+    prioridadCalculada: triage.prioridad,
+    motivo: triage.motivo,
+    triageVersion: triage.version,
+  });
 
   return ticket;
+}
+
+export async function updateTicketPriority(
+  organizationId: string,
+  actorId: string,
+  ticketId: string,
+  input: UpdateTicketPriorityInput,
+  ipAddress?: string,
+) {
+  const ticket = await prisma.ticket.findFirst({ where: { id: ticketId, organizationId } });
+  if (!ticket) throw HttpError.notFound('Ticket no encontrado');
+  if (ticket.prioridad === input.prioridad) throw HttpError.badRequest('La prioridad seleccionada ya esta aplicada');
+
+  const [actualizado] = await prisma.$transaction([
+    prisma.ticket.update({
+      where: { id: ticketId },
+      data: { prioridad: input.prioridad as never },
+      include: TICKET_INCLUDE,
+    }),
+    prisma.ticketHistory.create({
+      data: {
+        ticketId,
+        actorId,
+        descripcion: `Prioridad ajustada de ${ticket.prioridad} a ${input.prioridad}. Motivo: ${input.motivo}`,
+      },
+    }),
+    prisma.auditLog.create({
+      data: {
+        organizationId,
+        userId: actorId,
+        action: AuditAction.TICKET_PRIORIDAD_CAMBIADA,
+        entidad: 'Ticket',
+        entidadId: ticketId,
+        ipAddress,
+        detalle: { prioridadAnterior: ticket.prioridad, prioridadNueva: input.prioridad, motivo: input.motivo },
+      },
+    }),
+  ]);
+  return actualizado;
 }
 
 export async function assignTicket(

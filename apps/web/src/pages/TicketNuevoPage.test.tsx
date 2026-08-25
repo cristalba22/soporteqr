@@ -36,12 +36,18 @@ describe('TicketNuevoPage', () => {
     await screen.findByRole('option', { name: 'Hardware' });
     fireEvent.change(screen.getByLabelText('Titulo'), { target: { value: 'Equipo sin respuesta' } });
     fireEvent.change(screen.getByLabelText('Descripcion'), { target: { value: 'El equipo no responde desde esta mañana.' } });
-    fireEvent.change(screen.getByLabelText('Categoria'), { target: { value: '11111111-1111-4111-8111-111111111111' } });
-    fireEvent.change(screen.getByLabelText('Prioridad'), { target: { value: 'ALTA' } });
+    fireEvent.change(screen.getByLabelText('¿A cuantas personas afecta?'), { target: { value: 'SECTOR' } });
+    fireEvent.click(screen.getByLabelText('El trabajo quedo detenido'));
+    fireEvent.click(screen.getByLabelText('Hay otro equipo o forma de continuar'));
     fireEvent.click(screen.getByRole('button', { name: 'Crear ticket' }));
 
     await waitFor(() => expect(apiPost).toHaveBeenCalledWith('/api/tickets', expect.objectContaining({
-      assetPublicCode: 'AST0001', titulo: 'Equipo sin respuesta', prioridad: 'ALTA',
+      assetPublicCode: 'AST0001',
+      titulo: 'Equipo sin respuesta',
+      categoryId: undefined,
+      impacto: 'SECTOR',
+      servicioInterrumpido: true,
+      tieneAlternativa: false,
     })));
     expect(await screen.findByText('Detalle creado')).toBeInTheDocument();
   });

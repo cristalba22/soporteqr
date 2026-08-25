@@ -11,7 +11,7 @@ async function login(page: import('@playwright/test').Page, email: string) {
 }
 
 async function logout(page: import('@playwright/test').Page) {
-  await page.getByRole('button', { name: 'Cerrar sesion' }).click();
+  await page.getByRole('button', { name: /Cerrar sesi.n/ }).click();
   await expect(page).toHaveURL(/\/login$/);
 }
 
@@ -20,12 +20,14 @@ test('empleado crea, tecnico resuelve y empleado recibe la notificacion', async 
   await page.goto('/tickets/nuevo?activo=AST0001');
   await page.getByLabel('Titulo').fill('Flujo E2E desde Playwright');
   await page.getByLabel('Descripcion').fill('Incidencia creada en navegador para comprobar el flujo vertical completo.');
-  await page.getByLabel('Categoria').selectOption({ label: 'Hardware' });
-  await page.getByLabel('Prioridad').selectOption('ALTA');
+  await page.getByLabel('¿A cuantas personas afecta?').selectOption('SECTOR');
+  await page.getByLabel('El trabajo quedo detenido').check();
+  await page.getByLabel('Hay otro equipo o forma de continuar').uncheck();
   await page.getByRole('button', { name: 'Crear ticket' }).click();
   await expect(page).toHaveURL(/\/tickets\/[0-9a-f-]+$/);
   const ticketUrl = page.url();
   await expect(page.getByRole('heading', { name: 'Flujo E2E desde Playwright' })).toBeVisible();
+  await expect(page.getByText('Prioridad calculada: Alta')).toBeVisible();
 
   await logout(page);
   await login(page, 'tecnico@soporteqr.demo');

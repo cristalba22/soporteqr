@@ -3,6 +3,7 @@ import {
   ASSET_STATUSES,
   AUDIT_ACTIONS,
   TICKET_PRIORITIES,
+  TICKET_IMPACTS,
   TICKET_STATUSES,
   USER_ROLES,
 } from './enums.js';
@@ -70,10 +71,22 @@ export const createTicketSchema = z.object({
   titulo: z.string().trim().min(4).max(150),
   descripcion: z.string().trim().min(10).max(3000),
   assetPublicCode: z.string().trim().min(4).max(40),
-  categoryId: z.string().uuid().nullable().optional(),
-  prioridad: z.enum(TICKET_PRIORITIES as [string, ...string[]]).default('MEDIA'),
+  categoryId: z.preprocess(
+    (value) => (value === '' || value === null ? undefined : value),
+    z.string().uuid('Categoria invalida').optional(),
+  ),
+  impacto: z.enum(TICKET_IMPACTS as [string, ...string[]]).default('PERSONA'),
+  servicioInterrumpido: z.boolean().default(false),
+  tieneAlternativa: z.boolean().default(true),
+  riesgoSeguridad: z.boolean().default(false),
 });
 export type CreateTicketInput = z.infer<typeof createTicketSchema>;
+
+export const updateTicketPrioritySchema = z.object({
+  prioridad: z.enum(TICKET_PRIORITIES as [string, ...string[]]),
+  motivo: z.string().trim().min(10, 'Explica el motivo con al menos 10 caracteres').max(500),
+});
+export type UpdateTicketPriorityInput = z.infer<typeof updateTicketPrioritySchema>;
 
 export const updateTicketStatusSchema = z.object({
   estado: z.enum(TICKET_STATUSES as [string, ...string[]]),

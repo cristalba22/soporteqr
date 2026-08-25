@@ -26,6 +26,14 @@ export const TicketPriority = {
 export type TicketPriority = (typeof TicketPriority)[keyof typeof TicketPriority];
 export const TICKET_PRIORITIES = Object.values(TicketPriority);
 
+export const TicketImpact = {
+  PERSONA: 'PERSONA',
+  SECTOR: 'SECTOR',
+  ORGANIZACION: 'ORGANIZACION',
+} as const;
+export type TicketImpact = (typeof TicketImpact)[keyof typeof TicketImpact];
+export const TICKET_IMPACTS = Object.values(TicketImpact);
+
 export const AssetStatus = {
   ACTIVO: 'ACTIVO',
   EN_REPARACION: 'EN_REPARACION',
@@ -73,6 +81,7 @@ export const AuditAction = {
   TICKET_CREADO: 'TICKET_CREADO',
   TICKET_ASIGNADO: 'TICKET_ASIGNADO',
   TICKET_CAMBIO_ESTADO: 'TICKET_CAMBIO_ESTADO',
+  TICKET_PRIORIDAD_CAMBIADA: 'TICKET_PRIORIDAD_CAMBIADA',
   TICKET_COMENTARIO_AGREGADO: 'TICKET_COMENTARIO_AGREGADO',
 } as const;
 export type AuditAction = (typeof AuditAction)[keyof typeof AuditAction];
