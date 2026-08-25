@@ -33,7 +33,9 @@ describe('flujo vertical completo de SoporteQR', () => {
       .get('/api/categories')
       .set(auth(employee.accessToken))
       .expect(200);
-    const hardware = categories.body.categories.find((category: { nombre: string }) => category.nombre === 'Hardware');
+    const hardware = categories.body.categories.find(
+      (category: { nombre: string }) => category.nombre === 'Hardware',
+    );
 
     const created = await request(app)
       .post('/api/tickets')
@@ -52,6 +54,20 @@ describe('flujo vertical completo de SoporteQR', () => {
     const ticketId = created.body.ticket.id as string;
     expect(created.body.ticket.prioridad).toBe('ALTA');
     expect(created.body.ticket.prioridadCalculada).toBe('ALTA');
+
+    const attachmentBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const uploaded = await request(app)
+      .post(`/api/tickets/${ticketId}/adjuntos`)
+      .set(auth(employee.accessToken))
+      .attach('archivo', attachmentBytes, { filename: 'evidencia.png', contentType: 'image/png' })
+      .expect(201);
+    const attachmentId = uploaded.body.attachment.id as string;
+    const downloaded = await request(app)
+      .get(`/api/tickets/${ticketId}/adjuntos/${attachmentId}`)
+      .set(auth(employee.accessToken))
+      .expect(200);
+    expect(downloaded.headers['content-type']).toContain('image/png');
+    expect(Buffer.compare(downloaded.body as Buffer, attachmentBytes)).toBe(0);
 
     await request(app)
       .get(`/api/tickets/${ticketId}`)
@@ -116,7 +132,12 @@ describe('flujo vertical completo de SoporteQR', () => {
       .map((item: { action: string }) => item.action);
 
     expect(ticketActions).toEqual(
-      expect.arrayContaining(['TICKET_CREADO', 'TICKET_PRIORIDAD_CAMBIADA', 'TICKET_ASIGNADO', 'TICKET_CAMBIO_ESTADO']),
+      expect.arrayContaining([
+        'TICKET_CREADO',
+        'TICKET_PRIORIDAD_CAMBIADA',
+        'TICKET_ASIGNADO',
+        'TICKET_CAMBIO_ESTADO',
+      ]),
     );
   });
 });

@@ -5,10 +5,6 @@ import {
   buildTicketNumber,
 } from '@soporteqr/shared';
 import type { UserRole } from '@soporteqr/shared';
-import { mkdir, unlink, writeFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
-import { randomUUID } from 'node:crypto';
-import { env } from '../../config/env.js';
 import type {
   AssignTicketInput,
   CreateCommentInput,
@@ -22,6 +18,12 @@ import { prisma } from '../../lib/prisma.js';
 import type { Prisma } from '@prisma/client';
 import { HttpError } from '../../utils/httpError.js';
 import { calcularPrioridad, sugerirCategoria } from './triage.js';
+import {
+  createAttachmentKey,
+  deleteAttachment,
+  loadAttachment,
+  saveAttachment,
+} from '../../services/attachmentStorage.js';
 
 async function registrarAuditoria(
   organizationId: string,
@@ -57,15 +59,25 @@ function accesoTicket(organizationId: string, userId: string, role: UserRole) {
   return role === 'EMPLEADO' ? { organizationId, reporterId: userId } : { organizationId };
 }
 
-export async function listTickets(organizationId: string, userId: string, role: UserRole, filtro: TicketFilterInput) {
-  const estadoPorVista = filtro.vista === 'ABIERTOS'
-    ? { notIn: ['RESUELTO', 'CERRADO'] as const }
-    : filtro.vista === 'FINALIZADOS'
-      ? { in: ['RESUELTO', 'CERRADO'] as const }
-      : undefined;
+export async function listTickets(
+  organizationId: string,
+  userId: string,
+  role: UserRole,
+  filtro: TicketFilterInput,
+) {
+  const estadoPorVista =
+    filtro.vista === 'ABIERTOS'
+      ? { notIn: ['RESUELTO', 'CERRADO'] as const }
+      : filtro.vista === 'FINALIZADOS'
+        ? { in: ['RESUELTO', 'CERRADO'] as const }
+        : undefined;
   const where: Prisma.TicketWhereInput = {
     ...accesoTicket(organizationId, userId, role),
-    ...(filtro.estado ? { estado: filtro.estado as never } : estadoPorVista ? { estado: estadoPorVista as never } : {}),
+    ...(filtro.estado
+      ? { estado: filtro.estado as never }
+      : estadoPorVista
+        ? { estado: estadoPorVista as never }
+        : {}),
     ...(filtro.prioridad ? { prioridad: filtro.prioridad as never } : {}),
     ...(filtro.categoryId ? { categoryId: filtro.categoryId } : {}),
     ...(filtro.locationId ? { locationId: filtro.locationId } : {}),
@@ -87,7 +99,12 @@ export async function listTickets(organizationId: string, userId: string, role: 
   return { tickets, total, page: filtro.page, pageSize: filtro.pageSize };
 }
 
-export async function getTicketById(organizationId: string, id: string, userId: string, role: UserRole) {
+export async function getTicketById(
+  organizationId: string,
+  id: string,
+  userId: string,
+  role: UserRole,
+) {
   const ticket = await prisma.ticket.findFirst({
     where: { id, ...accesoTicket(organizationId, userId, role) },
     include: {
@@ -97,8 +114,13 @@ export async function getTicketById(organizationId: string, id: string, userId: 
         include: { author: { select: { id: true, nombre: true } } },
         orderBy: { createdAt: 'asc' },
       },
-      adjuntos: { select: { id: true, fileName: true, mimeType: true, sizeBytes: true, createdAt: true } },
-      historial: { include: { actor: { select: { id: true, nombre: true } } }, orderBy: { createdAt: 'asc' } },
+      adjuntos: {
+        select: { id: true, fileName: true, mimeType: true, sizeBytes: true, createdAt: true },
+      },
+      historial: {
+        include: { actor: { select: { id: true, nombre: true } } },
+        orderBy: { createdAt: 'asc' },
+      },
     },
   });
   if (!ticket) throw HttpError.notFound('Ticket no encontrado');
@@ -123,7 +145,9 @@ export async function createTicket(
   if (!asset) throw HttpError.notFound('Activo no encontrado');
   let categoryId = input.categoryId;
   if (input.categoryId) {
-    const category = await prisma.category.findFirst({ where: { id: input.categoryId, organizationId } });
+    const category = await prisma.category.findFirst({
+      where: { id: input.categoryId, organizationId },
+    });
     if (!category) throw HttpError.badRequest('La categoria no pertenece a la organizacion');
   } else {
     const nombreSugerido = sugerirCategoria(input.titulo, input.descripcion, asset.tipo);
@@ -171,11 +195,18 @@ export async function createTicket(
     },
   });
 
-  await registrarAuditoria(organizationId, reporterId, AuditAction.TICKET_CREADO, ticket.id, ipAddress, {
-    prioridadCalculada: triage.prioridad,
-    motivo: triage.motivo,
-    triageVersion: triage.version,
-  });
+  await registrarAuditoria(
+    organizationId,
+    reporterId,
+    AuditAction.TICKET_CREADO,
+    ticket.id,
+    ipAddress,
+    {
+      prioridadCalculada: triage.prioridad,
+      motivo: triage.motivo,
+      triageVersion: triage.version,
+    },
+  );
 
   return ticket;
 }
@@ -189,7 +220,8 @@ export async function updateTicketPriority(
 ) {
   const ticket = await prisma.ticket.findFirst({ where: { id: ticketId, organizationId } });
   if (!ticket) throw HttpError.notFound('Ticket no encontrado');
-  if (ticket.prioridad === input.prioridad) throw HttpError.badRequest('La prioridad seleccionada ya esta aplicada');
+  if (ticket.prioridad === input.prioridad)
+    throw HttpError.badRequest('La prioridad seleccionada ya esta aplicada');
 
   const [actualizado] = await prisma.$transaction([
     prisma.ticket.update({
@@ -212,7 +244,11 @@ export async function updateTicketPriority(
         entidad: 'Ticket',
         entidadId: ticketId,
         ipAddress,
-        detalle: { prioridadAnterior: ticket.prioridad, prioridadNueva: input.prioridad, motivo: input.motivo },
+        detalle: {
+          prioridadAnterior: ticket.prioridad,
+          prioridadNueva: input.prioridad,
+          motivo: input.motivo,
+        },
       },
     }),
   ]);
@@ -262,7 +298,13 @@ export async function assignTicket(
     },
   });
 
-  await registrarAuditoria(organizationId, actorId, AuditAction.TICKET_ASIGNADO, ticketId, ipAddress);
+  await registrarAuditoria(
+    organizationId,
+    actorId,
+    AuditAction.TICKET_ASIGNADO,
+    ticketId,
+    ipAddress,
+  );
 
   return actualizado;
 }
@@ -325,7 +367,13 @@ export async function updateTicketStatus(
     });
   }
 
-  await registrarAuditoria(organizationId, actorId, AuditAction.TICKET_CAMBIO_ESTADO, ticketId, ipAddress);
+  await registrarAuditoria(
+    organizationId,
+    actorId,
+    AuditAction.TICKET_CAMBIO_ESTADO,
+    ticketId,
+    ipAddress,
+  );
 
   return actualizado;
 }
@@ -338,9 +386,12 @@ export async function addComment(
   input: CreateCommentInput,
   ipAddress?: string,
 ) {
-  const ticket = await prisma.ticket.findFirst({ where: { id: ticketId, ...accesoTicket(organizationId, authorId, role) } });
+  const ticket = await prisma.ticket.findFirst({
+    where: { id: ticketId, ...accesoTicket(organizationId, authorId, role) },
+  });
   if (!ticket) throw HttpError.notFound('Ticket no encontrado');
-  if (role === 'EMPLEADO' && input.interno) throw HttpError.forbidden('No puedes crear notas internas');
+  if (role === 'EMPLEADO' && input.interno)
+    throw HttpError.forbidden('No puedes crear notas internas');
 
   const comentario = await prisma.ticketComment.create({
     data: {
@@ -364,16 +415,16 @@ export async function addComment(
     });
   }
 
-  await registrarAuditoria(organizationId, authorId, AuditAction.TICKET_COMENTARIO_AGREGADO, ticketId, ipAddress);
+  await registrarAuditoria(
+    organizationId,
+    authorId,
+    AuditAction.TICKET_COMENTARIO_AGREGADO,
+    ticketId,
+    ipAddress,
+  );
 
   return comentario;
 }
-
-const EXTENSIONES: Record<string, string> = {
-  'image/png': '.png',
-  'image/jpeg': '.jpg',
-  'image/webp': '.webp',
-};
 
 export async function addAttachment(
   organizationId: string,
@@ -382,19 +433,26 @@ export async function addAttachment(
   ticketId: string,
   file: { originalname: string; mimetype: string; size: number; buffer: Buffer },
 ) {
-  const ticket = await prisma.ticket.findFirst({ where: { id: ticketId, ...accesoTicket(organizationId, userId, role) } });
+  const ticket = await prisma.ticket.findFirst({
+    where: { id: ticketId, ...accesoTicket(organizationId, userId, role) },
+  });
   if (!ticket) throw HttpError.notFound('Ticket no encontrado');
 
-  const storagePath = resolve(env.UPLOAD_DIR, `${randomUUID()}${EXTENSIONES[file.mimetype] ?? ''}`);
-  await mkdir(dirname(storagePath), { recursive: true });
-  await writeFile(storagePath, file.buffer);
+  const storageKey = createAttachmentKey(organizationId, ticketId, file.mimetype);
+  const storagePath = await saveAttachment(storageKey, file.buffer, file.mimetype);
   try {
     return await prisma.ticketAttachment.create({
-      data: { ticketId, fileName: file.originalname, mimeType: file.mimetype, sizeBytes: file.size, storagePath },
+      data: {
+        ticketId,
+        fileName: file.originalname,
+        mimeType: file.mimetype,
+        sizeBytes: file.size,
+        storagePath,
+      },
       select: { id: true, fileName: true, mimeType: true, sizeBytes: true, createdAt: true },
     });
   } catch (error) {
-    await unlink(storagePath).catch(() => undefined);
+    await deleteAttachment(storagePath).catch(() => undefined);
     throw error;
   }
 }
@@ -410,5 +468,6 @@ export async function getAttachment(
     where: { id: attachmentId, ticketId, ticket: accesoTicket(organizationId, userId, role) },
   });
   if (!attachment) throw HttpError.notFound('Adjunto no encontrado');
-  return attachment;
+  const data = await loadAttachment(attachment.storagePath);
+  return { ...attachment, data };
 }

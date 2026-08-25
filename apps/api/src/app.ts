@@ -17,6 +17,8 @@ import { usersRouter } from './modules/users/router.js';
 import { notificationsRouter } from './modules/notifications/router.js';
 import { auditRouter } from './modules/audit/router.js';
 import { dashboardRouter } from './modules/dashboard/router.js';
+import { prisma } from './lib/prisma.js';
+import { attachmentStorageName, checkAttachmentStorage } from './services/attachmentStorage.js';
 
 export function createApp(): Express {
   const app = express();
@@ -48,6 +50,16 @@ export function createApp(): Express {
 
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
+  });
+
+  app.get('/api/health/ready', async (req, res) => {
+    try {
+      await Promise.all([prisma.$queryRaw`SELECT 1`, checkAttachmentStorage()]);
+      res.json({ status: 'ready', database: 'ok', storage: attachmentStorageName() });
+    } catch (error) {
+      console.error('Readiness check fallido:', error);
+      res.status(503).json({ status: 'unavailable' });
+    }
   });
 
   app.get('/api/docs.json', (req, res) => {

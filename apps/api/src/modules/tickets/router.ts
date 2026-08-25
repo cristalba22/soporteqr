@@ -48,7 +48,12 @@ ticketsRouter.get(
   validate(ticketFilterSchema, 'query'),
   asyncHandler(async (req: Request, res: Response) => {
     if (!req.user) throw HttpError.unauthorized();
-    const resultado = await listTickets(req.user.organizationId, req.user.id, req.user.role, req.query as never);
+    const resultado = await listTickets(
+      req.user.organizationId,
+      req.user.id,
+      req.user.role,
+      req.query as never,
+    );
     res.json(resultado);
   }),
 );
@@ -95,7 +100,13 @@ ticketsRouter.post(
     if (!req.user) throw HttpError.unauthorized();
     const { id } = req.params;
     if (!id) throw HttpError.notFound('Ticket no encontrado');
-    const ticket = await updateTicketStatus(req.user.organizationId, req.user.id, id, req.body, req.ip);
+    const ticket = await updateTicketStatus(
+      req.user.organizationId,
+      req.user.id,
+      id,
+      req.body,
+      req.ip,
+    );
     res.json({ ticket });
   }),
 );
@@ -108,7 +119,13 @@ ticketsRouter.post(
     if (!req.user) throw HttpError.unauthorized();
     const { id } = req.params;
     if (!id) throw HttpError.notFound('Ticket no encontrado');
-    const ticket = await updateTicketPriority(req.user.organizationId, req.user.id, id, req.body, req.ip);
+    const ticket = await updateTicketPriority(
+      req.user.organizationId,
+      req.user.id,
+      id,
+      req.body,
+      req.ip,
+    );
     res.json({ ticket });
   }),
 );
@@ -120,7 +137,14 @@ ticketsRouter.post(
     if (!req.user) throw HttpError.unauthorized();
     const { id } = req.params;
     if (!id) throw HttpError.notFound('Ticket no encontrado');
-    const comentario = await addComment(req.user.organizationId, req.user.id, req.user.role, id, req.body, req.ip);
+    const comentario = await addComment(
+      req.user.organizationId,
+      req.user.id,
+      req.user.role,
+      id,
+      req.body,
+      req.ip,
+    );
     res.status(201).json({ comentario });
   }),
 );
@@ -133,7 +157,13 @@ ticketsRouter.post(
     const { id } = req.params;
     if (!id) throw HttpError.notFound('Ticket no encontrado');
     if (!req.file) throw HttpError.badRequest('Debes seleccionar una imagen');
-    const adjunto = await addAttachment(req.user.organizationId, req.user.id, req.user.role, id, req.file);
+    const adjunto = await addAttachment(
+      req.user.organizationId,
+      req.user.id,
+      req.user.role,
+      id,
+      req.file,
+    );
     res.status(201).json({ attachment: adjunto });
   }),
 );
@@ -144,7 +174,16 @@ ticketsRouter.get(
     if (!req.user) throw HttpError.unauthorized();
     const { id, attachmentId } = req.params;
     if (!id || !attachmentId) throw HttpError.notFound('Adjunto no encontrado');
-    const adjunto = await getAttachment(req.user.organizationId, req.user.id, req.user.role, id, attachmentId);
-    res.download(adjunto.storagePath, adjunto.fileName);
+    const adjunto = await getAttachment(
+      req.user.organizationId,
+      req.user.id,
+      req.user.role,
+      id,
+      attachmentId,
+    );
+    res.attachment(adjunto.fileName);
+    res.type(adjunto.mimeType);
+    res.setHeader('Content-Length', adjunto.data.byteLength);
+    res.send(adjunto.data);
   }),
 );

@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
 import { MulterError } from 'multer';
 import { HttpError } from '../utils/httpError.js';
+import { notifyUnhandledError } from '../services/errorAlert.js';
 
 export function notFoundHandler(req: Request, res: Response): void {
   res.status(404).json({ error: 'Ruta no encontrada' });
@@ -20,7 +21,8 @@ export function errorHandler(
   }
 
   if (err instanceof MulterError) {
-    const message = err.code === 'LIMIT_FILE_SIZE' ? 'La imagen supera el limite de 5 MB' : 'Adjunto invalido';
+    const message =
+      err.code === 'LIMIT_FILE_SIZE' ? 'La imagen supera el limite de 5 MB' : 'Adjunto invalido';
     res.status(400).json({ error: message });
     return;
   }
@@ -31,5 +33,6 @@ export function errorHandler(
   }
 
   console.error('Error no controlado:', err);
+  void notifyUnhandledError(err, req);
   res.status(500).json({ error: 'Error interno del servidor' });
 }

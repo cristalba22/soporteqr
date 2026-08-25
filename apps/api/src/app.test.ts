@@ -12,6 +12,13 @@ describe('endpoints publicos del sistema', () => {
     expect(response.body).toEqual({ status: 'ok' });
   });
 
+  it('confirma que PostgreSQL y el almacenamiento estan listos', async () => {
+    const response = await request(app).get('/api/health/ready');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ status: 'ready', database: 'ok', storage: 'local' });
+  });
+
   it('publica una especificacion OpenAPI con las rutas principales', async () => {
     const response = await request(app).get('/api/docs.json');
 
@@ -21,6 +28,7 @@ describe('endpoints publicos del sistema', () => {
     expect(response.body.paths['/api/assets/{id}']).toBeDefined();
     expect(response.body.paths['/api/tickets/{id}/adjuntos']).toBeDefined();
     expect(response.body.paths['/api/dashboard']).toBeDefined();
+    expect(response.body.paths['/api/health/ready']).toBeDefined();
   });
 
   it('sirve la interfaz Swagger', async () => {
@@ -43,8 +51,12 @@ describe('endpoints publicos del sistema', () => {
   });
 
   it('protege las bajas administrativas sin autenticacion', async () => {
-    const locationResponse = await request(app).delete('/api/locations/00000000-0000-0000-0000-000000000000');
-    const categoryResponse = await request(app).delete('/api/categories/00000000-0000-0000-0000-000000000000');
+    const locationResponse = await request(app).delete(
+      '/api/locations/00000000-0000-0000-0000-000000000000',
+    );
+    const categoryResponse = await request(app).delete(
+      '/api/categories/00000000-0000-0000-0000-000000000000',
+    );
 
     expect(locationResponse.status).toBe(401);
     expect(categoryResponse.status).toBe(401);

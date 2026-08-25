@@ -48,11 +48,11 @@ Abrir:
 
 Contraseña común de desarrollo: `Demo1234!`
 
-| Rol | Usuario |
-| --- | --- |
-| Administrador | `admin@soporteqr.demo` |
-| Técnico | `tecnico@soporteqr.demo` |
-| Empleado | `empleado@soporteqr.demo` |
+| Rol           | Usuario                   |
+| ------------- | ------------------------- |
+| Administrador | `admin@soporteqr.demo`    |
+| Técnico       | `tecnico@soporteqr.demo`  |
+| Empleado      | `empleado@soporteqr.demo` |
 
 Estas credenciales son exclusivamente locales y no deben utilizarse en producción.
 
@@ -86,7 +86,7 @@ flowchart LR
   U[Empleado / Técnico / Admin] --> W[React + Vite]
   W -->|REST + JWT| A[Express API]
   A -->|Prisma| P[(PostgreSQL 16)]
-  A --> F[Adjuntos locales]
+  A --> F[Volumen local o Cloudflare R2 privado]
   A --> Q[Generador QR]
   T[Vitest / Supertest / RTL / Playwright] --> W
   T --> A
@@ -115,6 +115,8 @@ El modelo de datos y los límites de seguridad están detallados en [docs/archit
 ## Despliegue
 
 Para producción se recomienda separar frontend, API, PostgreSQL y almacenamiento de adjuntos. Configurar secretos reales, HTTPS, `NODE_ENV=production`, un origen CORS único y almacenamiento persistente. Aplicar migraciones con `npm run db:deploy`; no ejecutar el seed demo. La arquitectura y la lista de control para publicar la demostración están en [docs/deployment-demo.md](docs/deployment-demo.md), junto con un [guion reproducible de cinco minutos](docs/demo-5-minutos.md).
+
+La configuración de Cloudflare R2, backups cifrados y probados, restauración, readiness y alertas está documentada en [docs/operations.md](docs/operations.md).
 
 ## Estructura
 
