@@ -157,14 +157,20 @@ export function DashboardPage() {
   const prioridadTotal = Math.max(1, porPrioridad.reduce((total, item) => total + item.total, 0));
   const maxCarga = Math.max(1, ...data.cargaPorTecnico.map((item) => item.total));
   const rangoLabel = RANGO_OPCIONES.find((opcion) => opcion.value === rango)?.label ?? '30 días';
+  const ticketQueueUrl = (filters: Record<string, string> = {}) => {
+    const params = new URLSearchParams(filters);
+    if (locationId) params.set('locationId', locationId);
+    const query = params.toString();
+    return `/${query ? `?${query}` : ''}`;
+  };
   const capacidadEstado = data.brechaCapacidad <= 0
     ? { label: 'Alineado', classes: 'bg-emerald-50 text-emerald-700' }
     : data.brechaCapacidad <= Math.max(2, Math.round(data.creadosUltimos30 * 0.2))
       ? { label: 'En riesgo', classes: 'bg-amber-50 text-amber-700' }
       : { label: 'Acumulando', classes: 'bg-red-50 text-red-700' };
   const senales = [
-    { label: 'Sin responsable', value: data.sinAsignar, detail: data.sinAsignar === 0 ? 'Todo el trabajo está asignado' : 'Esperando asignación técnica', href: '/?estado=NUEVO', tone: 'text-amber-300' },
-    { label: 'Casos estancados', value: data.sinActividad, detail: data.sinActividad === 0 ? 'Flujo operativo al día' : 'Más de 24 h sin actividad', href: '/', tone: 'text-violet-300' },
+    { label: 'Sin responsable', value: data.sinAsignar, detail: data.sinAsignar === 0 ? 'Todo el trabajo está asignado' : 'Esperando asignación técnica', href: ticketQueueUrl({ estado: 'NUEVO' }), tone: 'text-amber-300' },
+    { label: 'Casos estancados', value: data.sinActividad, detail: data.sinActividad === 0 ? 'Flujo operativo al día' : 'Más de 24 h sin actividad', href: ticketQueueUrl(), tone: 'text-violet-300' },
   ];
 
   return (
@@ -227,7 +233,7 @@ export function DashboardPage() {
                 <h2 className="mt-1 text-xl font-semibold">Tres señales que mueven la operación</h2>
               </div>
               <div className="space-y-2">
-                <Link to="/?prioridad=CRITICA" className="group block rounded-2xl border border-white/10 bg-white/[0.045] p-4 transition-colors hover:bg-white/[0.09]">
+                <Link to={ticketQueueUrl({ prioridad: 'CRITICA' })} className="group block rounded-2xl border border-white/10 bg-white/[0.045] p-4 transition-colors hover:bg-white/[0.09]">
                   <span className="flex items-center justify-between">
                     <span><span className="block text-sm font-medium text-white">Críticos abiertos</span><span className="mt-0.5 block text-xs text-marino-300">Antigüedad desde su creación</span></span>
                     <span className="flex items-center gap-3"><strong className="text-3xl font-semibold text-red-300">{data.criticosAbiertos}</strong><span className="text-marino-400 transition-transform group-hover:translate-x-1"><ArrowIcon /></span></span>
@@ -259,14 +265,14 @@ export function DashboardPage() {
 
       <Panel title="Flujo vivo" subtitle="Cada etapa es una puerta directa a la cola de trabajo correspondiente.">
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          {porEstado.map((estado) => { const porcentaje = Math.round((estado.total / Math.max(1, totalTickets)) * 100); return <Link key={estado.key} to={`/?estado=${estado.key}`} className="group relative overflow-hidden rounded-xl border border-grafito-200 bg-grafito-100/50 p-4 transition-colors hover:border-grafito-300 hover:bg-white"><span className="absolute bottom-0 left-0 h-1 transition-all group-hover:h-1.5" style={{ width: `${porcentaje}%`, backgroundColor: estado.color }} /><span className="flex items-center justify-between gap-2"><span className="text-xs font-medium text-grafito-600">{estado.nombre}</span><span className="h-2 w-2 rounded-full" style={{ backgroundColor: estado.color }} /></span><span className="mt-3 block text-2xl font-semibold text-marino-950">{estado.total}</span><span className="text-xs text-grafito-500">{porcentaje}% del total</span></Link>; })}
+          {porEstado.map((estado) => { const porcentaje = Math.round((estado.total / Math.max(1, totalTickets)) * 100); return <Link key={estado.key} to={ticketQueueUrl({ estado: estado.key })} className="group relative overflow-hidden rounded-xl border border-grafito-200 bg-grafito-100/50 p-4 transition-colors hover:border-grafito-300 hover:bg-white"><span className="absolute bottom-0 left-0 h-1 transition-all group-hover:h-1.5" style={{ width: `${porcentaje}%`, backgroundColor: estado.color }} /><span className="flex items-center justify-between gap-2"><span className="text-xs font-medium text-grafito-600">{estado.nombre}</span><span className="h-2 w-2 rounded-full" style={{ backgroundColor: estado.color }} /></span><span className="mt-3 block text-2xl font-semibold text-marino-950">{estado.total}</span><span className="text-xs text-grafito-500">{porcentaje}% del total</span></Link>; })}
         </div>
       </Panel>
 
       <section className="grid gap-4 lg:grid-cols-2">
         <Panel title="Mapa de presión" subtitle="La mezcla de prioridades revela dónde se concentra el riesgo.">
           <div className="mb-6 flex h-3 overflow-hidden rounded-full bg-grafito-100">{porPrioridad.map((prioridad) => <span key={prioridad.key} title={`${prioridad.nombre}: ${prioridad.total}`} style={{ width: `${(prioridad.total / prioridadTotal) * 100}%`, backgroundColor: prioridad.color }} />)}</div>
-          <div className="grid grid-cols-2 gap-3">{porPrioridad.map((prioridad) => <Link key={prioridad.key} to={`/?prioridad=${prioridad.key}`} className="flex items-center justify-between rounded-xl border border-grafito-200 p-3 hover:bg-grafito-100/60"><span className="flex items-center gap-2 text-sm text-grafito-600"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: prioridad.color }} />{prioridad.nombre}</span><strong className="text-lg text-marino-950">{prioridad.total}</strong></Link>)}</div>
+          <div className="grid grid-cols-2 gap-3">{porPrioridad.map((prioridad) => <Link key={prioridad.key} to={ticketQueueUrl({ prioridad: prioridad.key })} className="flex items-center justify-between rounded-xl border border-grafito-200 p-3 hover:bg-grafito-100/60"><span className="flex items-center gap-2 text-sm text-grafito-600"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: prioridad.color }} />{prioridad.nombre}</span><strong className="text-lg text-marino-950">{prioridad.total}</strong></Link>)}</div>
         </Panel>
         <Panel title="Trayectoria de demanda" subtitle="Volumen mensual para anticipar capacidad, no sólo explicar el pasado.">
           <div className="h-56"><ResponsiveContainer width="100%" height="100%"><AreaChart data={evolucion}><defs><linearGradient id="evolucionFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#1fc7b6" stopOpacity={0.42} /><stop offset="100%" stopColor="#1fc7b6" stopOpacity={0} /></linearGradient></defs><CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} /><XAxis dataKey="nombre" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} /><YAxis allowDecimals={false} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} /><Tooltip /><Area type="monotone" dataKey="total" stroke="#12a396" strokeWidth={3} fill="url(#evolucionFill)" /></AreaChart></ResponsiveContainer></div>
@@ -283,7 +289,7 @@ export function DashboardPage() {
       </section>
 
       <Panel title="Activos que piden atención" subtitle="Reincidencia detectada a partir del historial real de tickets.">
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{data.activosConMasIncidencias.map((asset, index) => <Link key={asset.assetId} to="/activos" className="group rounded-xl border border-grafito-200 p-4 transition-colors hover:border-turquesa-300 hover:bg-turquesa-50/30"><span className="flex items-center justify-between"><span className="font-mono text-xs font-semibold text-marino-700">{asset.codigoInterno}</span><span className="text-xs font-semibold text-grafito-400">#{index + 1}</span></span><span className="mt-4 block text-sm text-grafito-600">{asset.tipo}</span><span className="mt-1 flex items-end justify-between"><strong className="text-2xl text-marino-950">{asset.total}</strong><span className="text-xs text-grafito-500">incidencias</span></span></Link>)}</div>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{data.activosConMasIncidencias.map((asset, index) => <Link key={asset.assetId} to={`/activos${locationId ? `?locationId=${encodeURIComponent(locationId)}` : ''}`} className="group rounded-xl border border-grafito-200 p-4 transition-colors hover:border-turquesa-300 hover:bg-turquesa-50/30"><span className="flex items-center justify-between"><span className="font-mono text-xs font-semibold text-marino-700">{asset.codigoInterno}</span><span className="text-xs font-semibold text-grafito-400">#{index + 1}</span></span><span className="mt-4 block text-sm text-grafito-600">{asset.tipo}</span><span className="mt-1 flex items-end justify-between"><strong className="text-2xl text-marino-950">{asset.total}</strong><span className="text-xs text-grafito-500">incidencias</span></span></Link>)}</div>
       </Panel>
     </div>
   );

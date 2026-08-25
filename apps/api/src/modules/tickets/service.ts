@@ -60,6 +60,7 @@ export async function listTickets(organizationId: string, userId: string, role: 
     prioridad: filtro.prioridad as never,
     categoryId: filtro.categoryId,
     locationId: filtro.locationId,
+    assetId: filtro.assetId,
     technicianId: filtro.technicianId,
   };
 

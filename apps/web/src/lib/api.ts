@@ -1,4 +1,4 @@
-import type { AssetStatus, CreateAssetInput, TicketPriority, TicketStatus, UserRole } from '@soporteqr/shared';
+import type { AssetStatus, CreateAssetInput, TicketPriority, TicketStatus, UpdateAssetInput, UserRole } from '@soporteqr/shared';
 
 const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL || `${window.location.protocol}//${window.location.hostname}:4000`
@@ -188,6 +188,10 @@ export async function updateUser(id: string, input: { nombre?: string; role?: Us
 export async function createAsset(input: CreateAssetInput): Promise<AssetListItem> {
   const data = await api.post<{ asset: AssetListItem }>('/api/assets', input);
   return data.asset;
+}
+
+export async function updateAsset(id: string, input: UpdateAssetInput): Promise<void> {
+  await api.patch(`/api/assets/${id}`, input);
 }
 
 export function getAssetQrUrl(publicAssetCode: string): string {

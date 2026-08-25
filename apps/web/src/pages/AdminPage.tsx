@@ -1,6 +1,7 @@
 import { UserRole } from '@soporteqr/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormEvent, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 
 import {
   createCategory,
@@ -35,7 +36,16 @@ const ROLE_LABELS: Record<UserRole, string> = {
 };
 
 export function AdminPage() {
-  const [tab, setTab] = useState<Tab>('usuarios');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('seccion');
+  const tab: Tab = tabParam && tabParam in TAB_LABELS ? tabParam as Tab : 'usuarios';
+  const usersQuery = useQuery({ queryKey: ['admin-users'], queryFn: getUsers });
+  const locationsQuery = useQuery({ queryKey: ['locations'], queryFn: getLocations });
+  const categoriesQuery = useQuery({ queryKey: ['admin-categories'], queryFn: getCategories });
+  const selectTab = (nextTab: Tab) => setSearchParams(nextTab === 'usuarios' ? {} : { seccion: nextTab });
+  const activeUsers = usersQuery.data?.filter((user) => user.activo).length ?? 0;
+  const totalAssets = locationsQuery.data?.reduce((total, location) => total + (location._count?.assets ?? 0), 0) ?? 0;
+  const classifiedTickets = categoriesQuery.data?.reduce((total, category) => total + category._count.tickets, 0) ?? 0;
 
   return (
     <div className="space-y-6">
@@ -44,20 +54,27 @@ export function AdminPage() {
           <span className="inline-flex rounded-full bg-turquesa-500/15 px-3 py-1 text-xs font-semibold text-turquesa-300">
             Control central
           </span>
-          <h1 className="mt-3 text-2xl font-semibold">Administracion</h1>
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight">Administración conectada</h1>
           <p className="mt-1 max-w-2xl text-sm text-marino-200">
             Gestiona accesos, estructura operativa y clasificacion de incidencias con trazabilidad.
           </p>
         </div>
-        <p className="text-xs text-marino-300">Los cambios quedan registrados en auditoria</p>
+        <div className="flex flex-col items-start gap-2 sm:items-end"><p className="text-xs text-marino-300">Los cambios quedan registrados en auditoría</p><Link to="/dashboard?rango=30d" className="rounded-xl border border-white/15 px-4 py-2 text-sm font-semibold text-marino-100 hover:bg-white/10">Ver impacto en el pulso →</Link></div>
       </header>
+
+      <section className="grid gap-3 sm:grid-cols-3">
+        <AdminMetric label="Accesos activos" value={activeUsers} detail={`${usersQuery.data?.length ?? 0} usuarios registrados`} onClick={() => selectTab('usuarios')} tone="bg-turquesa-500" />
+        <AdminMetric label="Red operativa" value={totalAssets} detail={`${locationsQuery.data?.length ?? 0} ubicaciones configuradas`} onClick={() => selectTab('ubicaciones')} tone="bg-marino-600" />
+        <AdminMetric label="Tickets clasificados" value={classifiedTickets} detail={`${categoriesQuery.data?.length ?? 0} categorías disponibles`} onClick={() => selectTab('categorias')} tone="bg-amber-500" />
+      </section>
 
       <div className="flex gap-1 overflow-x-auto rounded-xl border border-grafito-200 bg-white p-1.5 shadow-panel">
         {(Object.keys(TAB_LABELS) as Tab[]).map((item) => (
           <button
             key={item}
             type="button"
-            onClick={() => setTab(item)}
+            onClick={() => selectTab(item)}
+            aria-pressed={tab === item}
             className={`min-w-32 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
               tab === item ? 'bg-marino-950 text-white' : 'text-grafito-600 hover:bg-grafito-100'
             }`}
@@ -194,7 +211,7 @@ function LocationsPanel() {
           return <tr key={item.id} className="border-t border-grafito-200 hover:bg-grafito-100/60">
             <td className="px-4 py-3"><p className="font-semibold text-marino-900">{item.nombre}</p><p className="text-xs text-grafito-500">{item.direccion || 'Sin direccion'}</p></td>
             <td className="px-4 py-3 text-grafito-700">{item._count?.users ?? 0}</td><td className="px-4 py-3 text-grafito-700">{item._count?.assets ?? 0}</td><td className="px-4 py-3 text-grafito-700">{item._count?.tickets ?? 0}</td>
-            <td className="px-4 py-3"><div className="flex gap-3"><Action onClick={() => open(item)}>Editar</Action><Action danger disabled={used} title={used ? 'Tiene elementos asociados' : undefined} onClick={() => { if (window.confirm(`Eliminar ${item.nombre}?`)) deleteMutation.mutate(item.id); }}>Eliminar</Action></div></td>
+            <td className="px-4 py-3"><div className="flex flex-wrap gap-3"><Link to={`/dashboard?rango=30d&locationId=${item.id}`} className="text-xs font-semibold text-marino-700 hover:text-turquesa-700">Pulso</Link><Link to={`/?locationId=${item.id}`} className="text-xs font-semibold text-marino-700 hover:text-turquesa-700">Tickets</Link><Action onClick={() => open(item)}>Editar</Action><Action danger disabled={used} title={used ? 'Tiene elementos asociados' : undefined} onClick={() => { if (window.confirm(`Eliminar ${item.nombre}?`)) deleteMutation.mutate(item.id); }}>Eliminar</Action></div></td>
           </tr>;
         })}
       </TableShell>
@@ -236,7 +253,7 @@ function CategoriesPanel() {
           <td className="px-4 py-3"><p className="font-semibold text-marino-900">{item.nombre}</p><p className="text-xs text-grafito-500">{item.descripcion || 'Sin descripcion'}</p></td>
           <td className="px-4 py-3 text-grafito-700">{item._count.tickets}</td>
           <td className="px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${item._count.tickets ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'}`}>{item._count.tickets ? 'En uso' : 'Disponible'}</span></td>
-          <td className="px-4 py-3"><div className="flex gap-3"><Action onClick={() => open(item)}>Editar</Action><Action danger disabled={item._count.tickets > 0} title={item._count.tickets ? 'Tiene tickets asociados' : undefined} onClick={() => { if (window.confirm(`Eliminar ${item.nombre}?`)) deleteMutation.mutate(item.id); }}>Eliminar</Action></div></td>
+          <td className="px-4 py-3"><div className="flex flex-wrap gap-3"><Link to={`/?categoryId=${item.id}`} className="text-xs font-semibold text-marino-700 hover:text-turquesa-700">Ver tickets</Link><Action onClick={() => open(item)}>Editar</Action><Action danger disabled={item._count.tickets > 0} title={item._count.tickets ? 'Tiene tickets asociados' : undefined} onClick={() => { if (window.confirm(`Eliminar ${item.nombre}?`)) deleteMutation.mutate(item.id); }}>Eliminar</Action></div></td>
         </tr>)}
       </TableShell>
     </AdminSection>
@@ -245,6 +262,10 @@ function CategoriesPanel() {
 
 function AdminSection({ title, description, action, onAction, children }: { title: string; description: string; action: string; onAction: () => void; children: React.ReactNode }) {
   return <section className="rounded-2xl border border-grafito-200 bg-white p-5 shadow-panel"><div className="mb-5 flex items-center justify-between gap-4"><div><h2 className="text-lg font-semibold text-marino-950">{title}</h2><p className="text-sm text-grafito-500">{description}</p></div><button type="button" onClick={onAction} className="shrink-0 rounded-lg bg-turquesa-500 px-4 py-2.5 text-sm font-semibold text-marino-950 hover:bg-turquesa-400">{action}</button></div>{children}</section>;
+}
+
+function AdminMetric({ label, value, detail, onClick, tone }: { label: string; value: number; detail: string; onClick: () => void; tone: string }) {
+  return <button type="button" onClick={onClick} className="rounded-2xl border border-grafito-200 bg-white p-4 text-left shadow-panel transition-transform hover:-translate-y-0.5"><span className="flex items-start justify-between"><span><span className="block text-xs font-semibold uppercase tracking-[0.14em] text-grafito-500">{label}</span><strong className="mt-2 block text-3xl text-marino-950">{value}</strong></span><span className={`h-3 w-3 rounded-full ${tone}`} /></span><span className="mt-1 block text-xs text-grafito-500">{detail}</span></button>;
 }
 
 function SimpleEditor({ visible, title, pending, error, onCancel, onSubmit, children }: { visible: boolean; title: string; pending: boolean; error: string; onCancel: () => void; onSubmit: () => void; children: React.ReactNode }) {
