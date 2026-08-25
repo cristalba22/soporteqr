@@ -205,6 +205,9 @@ export interface DashboardSummary {
   variacionCreados: number | null;
   resueltosUltimos30: number;
   variacionResueltos: number | null;
+  brechaCapacidad: number;
+  criticosConAntiguedad: Array<{ id: string; numero: string; antiguedadHoras: number }>;
+  slaHoras: number;
   tiempoPromedioResolucionHoras: number;
   distribucionPorEstado: Array<{ estado: TicketStatus; total: number }>;
   distribucionPorPrioridad: Array<{ prioridad: TicketPriority; total: number }>;
@@ -223,11 +226,25 @@ export interface DashboardSummary {
     assetCode: string;
     location: string;
     motivo: string;
+    antiguedadHoras: number;
+    fueraSla: boolean;
+    slaHoras: number;
   }>;
 }
 
-export function getDashboardSummary(): Promise<DashboardSummary> {
-  return api.get<DashboardSummary>('/api/dashboard');
+export interface DashboardFiltros {
+  desde?: string;
+  hasta?: string;
+  locationId?: string;
+}
+
+export function getDashboardSummary(filtros: DashboardFiltros = {}): Promise<DashboardSummary> {
+  const params = new URLSearchParams();
+  if (filtros.desde) params.set('desde', filtros.desde);
+  if (filtros.hasta) params.set('hasta', filtros.hasta);
+  if (filtros.locationId) params.set('locationId', filtros.locationId);
+  const query = params.toString();
+  return api.get<DashboardSummary>(`/api/dashboard${query ? `?${query}` : ''}`);
 }
 
 export async function uploadAttachment(ticketId: string, file: File): Promise<void> {
