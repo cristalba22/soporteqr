@@ -49,6 +49,9 @@ jobs:
       - name: Generar Prisma Client
         run: npm run prisma:generate --workspace=apps/api
 
+      - name: Compilar paquete compartido
+        run: npm run build --workspace=packages/shared
+
       - name: Lint
         run: npm run lint
 
@@ -63,7 +66,7 @@ jobs:
 
       - name: Conservar evidencia de Playwright si falla
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: playwright-failure-${{ github.run_id }}
           path: |
