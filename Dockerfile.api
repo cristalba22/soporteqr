@@ -30,7 +30,7 @@ ENV UPLOAD_DIR=/app/uploads
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates openssl \
+    && apt-get install -y --no-install-recommends ca-certificates gosu openssl \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /app/uploads \
     && chown -R node:node /app
@@ -43,9 +43,11 @@ COPY --from=builder --chown=node:node /app/apps/api/package.json ./apps/api/pack
 COPY --from=builder --chown=node:node /app/apps/api/dist ./apps/api/dist
 COPY --from=builder --chown=node:node /app/apps/api/dist-seed ./apps/api/dist-seed
 COPY --from=builder --chown=node:node /app/apps/api/prisma ./apps/api/prisma
+COPY --chown=root:root docker-entrypoint-api.sh /usr/local/bin/docker-entrypoint-api.sh
 
-USER node
+RUN chmod 0755 /usr/local/bin/docker-entrypoint-api.sh
 
 EXPOSE 4000
 
+ENTRYPOINT ["docker-entrypoint-api.sh"]
 CMD ["sh", "-c", "npm run db:deploy --workspace=apps/api && npm run start --workspace=apps/api"]
