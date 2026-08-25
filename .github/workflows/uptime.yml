@@ -30,7 +30,7 @@ jobs:
 
       - name: Abrir o actualizar alerta
         if: steps.uptime.outcome == 'failure'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const title = '[Monitor] SoporteQR no responde correctamente';
@@ -42,7 +42,7 @@ jobs:
 
       - name: Cerrar alerta recuperada
         if: steps.uptime.outcome == 'success'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const title = '[Monitor] SoporteQR no responde correctamente';

@@ -35,16 +35,19 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: npm
 
       - name: Instalar dependencias
         run: npm ci
+
+      - name: Generar Prisma Client
+        run: npm run prisma:generate --workspace=apps/api
 
       - name: Lint
         run: npm run lint
@@ -60,7 +63,7 @@ jobs:
 
       - name: Conservar evidencia de Playwright si falla
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: playwright-failure-${{ github.run_id }}
           path: |
