@@ -12,7 +12,7 @@ export const authRouter = Router();
 
 const refreshCookieOptions = {
   httpOnly: true,
-  sameSite: 'lax' as const,
+  sameSite: isProduction ? ('none' as const) : ('lax' as const),
   secure: isProduction,
   path: '/api/auth',
 };
