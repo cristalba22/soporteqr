@@ -4,8 +4,8 @@ const password = 'Demo1234!';
 
 async function login(page: import('@playwright/test').Page, email: string) {
   await page.goto('/login');
-  await page.getByLabel('Correo electronico').fill(email);
-  await page.getByLabel('Contrasena').fill(password);
+  await page.getByLabel('Correo electrónico').fill(email);
+  await page.getByLabel('Contraseña').fill(password);
   await page.getByRole('button', { name: 'Ingresar' }).click();
   await expect(page).not.toHaveURL(/\/login$/);
 }
