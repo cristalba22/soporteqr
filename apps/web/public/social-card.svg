@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(930 80) rotate(135) scale(520 420)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#20C7B7" stop-opacity=".34"/>
+      <stop offset="1" stop-color="#07111F" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="panel" x1="738" y1="126" x2="1084" y2="492" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#10243B"/>
+      <stop offset="1" stop-color="#0A1728"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#07111F"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <rect x="72" y="68" width="58" height="58" rx="15" fill="#20C7B7"/>
+  <path d="M88 84h12v12H88V84Zm4 4v4h4v-4h-4Zm14-4h12v12h-12V84Zm4 4v4h4v-4h-4ZM88 102h12v12H88v-12Zm4 4v4h4v-4h-4Zm16-4h5v5h-5v-5Zm7 0h3v9h-5v3h-7v-5h4v-3h5v-4Z" fill="#07111F"/>
+  <text x="148" y="106" fill="#F8FAFC" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700">SoporteQR</text>
+  <text x="72" y="224" fill="#20C7B7" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" letter-spacing="3">ACTIVOS E INCIDENCIAS CONECTADOS</text>
+  <text x="72" y="302" fill="#F8FAFC" font-family="Arial, Helvetica, sans-serif" font-size="54" font-weight="700">Del QR en el equipo</text>
+  <text x="72" y="365" fill="#F8FAFC" font-family="Arial, Helvetica, sans-serif" font-size="54" font-weight="700">a una decisión operativa.</text>
+  <text x="72" y="424" fill="#A7B7CA" font-family="Arial, Helvetica, sans-serif" font-size="23">Reporte, triaje, resolución, métricas y trazabilidad.</text>
+  <text x="72" y="531" fill="#D9E4EF" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700">Cristian Eduardo Alba · Córdoba, Argentina</text>
+  <rect x="760" y="126" width="368" height="366" rx="28" fill="url(#panel)" stroke="#29435F" stroke-width="2"/>
+  <text x="798" y="174" fill="#93A9C0" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" letter-spacing="2">PULSO OPERATIVO</text>
+  <circle cx="1084" cy="168" r="7" fill="#34D399"/>
+  <rect x="798" y="208" width="138" height="92" rx="16" fill="#142B46"/>
+  <text x="818" y="250" fill="#F8FAFC" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">14</text>
+  <text x="818" y="278" fill="#93A9C0" font-family="Arial, Helvetica, sans-serif" font-size="14">Abiertos</text>
+  <rect x="952" y="208" width="138" height="92" rx="16" fill="#3A1F2B"/>
+  <text x="972" y="250" fill="#FCA5A5" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">3</text>
+  <text x="972" y="278" fill="#93A9C0" font-family="Arial, Helvetica, sans-serif" font-size="14">En riesgo</text>
+  <rect x="798" y="318" width="292" height="136" rx="18" fill="#20C7B7"/>
+  <text x="822" y="354" fill="#07111F" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="700">CAPACIDAD DE CIERRE</text>
+  <text x="822" y="410" fill="#07111F" font-family="Arial, Helvetica, sans-serif" font-size="46" font-weight="700">+6</text>
+  <text x="900" y="406" fill="#0B3A39" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700">Alineada con la demanda</text>
+</svg>

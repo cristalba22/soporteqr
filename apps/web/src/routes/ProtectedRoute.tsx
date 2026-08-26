@@ -15,6 +15,7 @@ export function ProtectedRoute() {
   }
 
   if (!user) {
+    if (location.pathname === '/') return <Navigate to="/presentacion" replace />;
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

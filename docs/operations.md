@@ -2,7 +2,7 @@
 
 ## Estado actual
 
-- La demo usa PostgreSQL administrado y un volumen persistente de Railway para adjuntos.
+- La demo usa PostgreSQL 18 administrado y Cloudflare R2 privado para adjuntos.
 - La API soporta `STORAGE_DRIVER=local` y `STORAGE_DRIVER=r2` sin cambiar rutas ni la base.
 - Los adjuntos nunca son públicos: toda descarga vuelve a comprobar organización, usuario y rol.
 - `/api/health` comprueba que el proceso vive; `/api/health/ready` comprueba PostgreSQL y almacenamiento.
@@ -32,7 +32,7 @@ R2_SECRET_ACCESS_KEY=<secreto limitado a adjuntos>
 R2_ATTACHMENTS_BUCKET=soporteqr-attachments
 ```
 
-Después del despliegue, `/api/health/ready` debe responder `storage: "r2"`. Los adjuntos anteriores siguen leyéndose desde el volumen; los nuevos se guardan en R2.
+En producción, `/api/health/ready` responde `storage: "r2"`. Los adjuntos nuevos se guardan en R2 y los archivos históricos del volumen continúan disponibles durante la transición.
 
 ## Backups automáticos y restauración
 

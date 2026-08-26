@@ -6,6 +6,8 @@ const BENEFICIOS = [
   ['03', 'Decisiones visibles', 'El equipo de soporte prioriza por riesgo, SLA, carga operativa y recurrencia.'],
 ];
 
+const TECNOLOGIAS = ['React', 'TypeScript', 'Express', 'PostgreSQL', 'Prisma', 'Cloudflare R2', 'Playwright', 'GitHub Actions'];
+
 export function LandingPage() {
   return (
     <main className="min-h-screen overflow-hidden bg-marino-950 text-white">
@@ -21,7 +23,7 @@ export function LandingPage() {
           <h1 className="mt-6 max-w-3xl text-4xl font-semibold leading-[1.05] tracking-[-0.04em] sm:text-6xl">Del QR en el equipo a una decisión operativa.</h1>
           <p className="mt-6 max-w-2xl text-base leading-7 text-marino-200 sm:text-lg">SoporteQR conecta activos, incidencias y equipos técnicos en un flujo simple, trazable y medible para organizaciones con múltiples áreas o sucursales.</p>
           <div className="mt-8 flex flex-wrap gap-3"><Link to="/login" className="rounded-xl bg-turquesa-500 px-5 py-3 text-sm font-bold text-marino-950 transition hover:bg-turquesa-400">Explorar la demo</Link><a href="#como-funciona" className="rounded-xl border border-marino-600 px-5 py-3 text-sm font-semibold hover:border-marino-300">Cómo funciona</a></div>
-          <p className="mt-5 text-xs text-marino-300">Demostración con datos ficticios. Sin información de pacientes ni datos clínicos.</p>
+          <p className="mt-5 text-xs text-marino-300">Demo pública con tres perfiles y datos ficticios. Sin información de pacientes ni datos clínicos.</p>
         </div>
 
         <div className="relative mx-auto w-full max-w-xl rounded-[2rem] border border-marino-600 bg-marino-900/80 p-4 shadow-2xl backdrop-blur">
@@ -37,7 +39,25 @@ export function LandingPage() {
 
       <section className="relative mx-auto max-w-7xl px-5 py-20 sm:px-8"><div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center"><div><p className="text-xs font-bold uppercase tracking-[0.2em] text-turquesa-300">Flujo de 5 minutos</p><h2 className="mt-3 text-3xl font-semibold tracking-tight">Escanear. Asignar. Resolver. Aprender.</h2><p className="mt-4 text-sm leading-6 text-marino-200">Empleado, técnico y administrador trabajan sobre el mismo historial, con permisos distintos y una auditoría común.</p></div><ol className="grid gap-3 sm:grid-cols-2"><Step number="1" text="El empleado escanea el QR y reporta." /><Step number="2" text="El responsable prioriza y asigna." /><Step number="3" text="El técnico registra la resolución." /><Step number="4" text="El dashboard transforma actividad en señales." /></ol></div></section>
 
-      <footer className="relative border-t border-marino-800 px-5 py-8 text-center text-xs text-marino-300"><p>SoporteQR es una herramienta de gestión técnica. Su alcance excluye historias clínicas y datos de pacientes.</p></footer>
+      <section className="relative border-y border-marino-800 bg-marino-900/55 py-14">
+        <div className="mx-auto max-w-7xl px-5 sm:px-8">
+          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-turquesa-300">Construcción y operación</p>
+              <h2 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">Un flujo completo, no sólo una interfaz.</h2>
+              <p className="mt-3 max-w-xl text-sm leading-6 text-marino-200">API con permisos por rol, base relacional, almacenamiento privado de adjuntos, backups cifrados y verificados, pruebas automáticas y monitoreo de disponibilidad.</p>
+            </div>
+            <ul className="flex flex-wrap gap-2" aria-label="Tecnologías utilizadas">
+              {TECNOLOGIAS.map((tecnologia) => <li key={tecnologia} className="rounded-full border border-marino-600 bg-marino-950/60 px-3 py-1.5 text-xs font-semibold text-marino-200">{tecnologia}</li>)}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <footer className="relative px-5 py-8 text-center text-xs text-marino-300">
+        <p>Diseñado y desarrollado por <a href="https://www.linkedin.com/in/cristian-eduardo-alba-374098240/" target="_blank" rel="noreferrer" className="font-semibold text-turquesa-300 hover:text-turquesa-200">Cristian Eduardo Alba</a> · Córdoba, Argentina.</p>
+        <p className="mt-2 text-marino-400">SoporteQR gestiona activos e incidencias técnicas; excluye historias clínicas y datos de pacientes.</p>
+      </footer>
     </main>
   );
 }

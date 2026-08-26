@@ -21,9 +21,26 @@ describe('LoginPage', () => {
       </MemoryRouter>,
     );
 
-    fireEvent.change(screen.getByLabelText('Correo electronico'), { target: { value: 'admin@soporteqr.demo' } });
-    fireEvent.change(screen.getByLabelText('Contrasena'), { target: { value: 'Demo1234!' } });
+    fireEvent.change(screen.getByLabelText('Correo electrónico'), { target: { value: 'admin@soporteqr.demo' } });
+    fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'Demo1234!' } });
     fireEvent.click(screen.getByRole('button', { name: 'Ingresar' }));
+
+    await waitFor(() => expect(loginMock).toHaveBeenCalledWith('admin@soporteqr.demo', 'Demo1234!'));
+    expect(await screen.findByText('Inicio autenticado')).toBeInTheDocument();
+  });
+
+  it('permite ingresar a la demo con un perfil preconfigurado', async () => {
+    loginMock.mockResolvedValueOnce(undefined);
+    render(
+      <MemoryRouter initialEntries={['/login']}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/" element={<p>Inicio autenticado</p>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Administrador/ }));
 
     await waitFor(() => expect(loginMock).toHaveBeenCalledWith('admin@soporteqr.demo', 'Demo1234!'));
     expect(await screen.findByText('Inicio autenticado')).toBeInTheDocument();

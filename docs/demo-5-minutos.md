@@ -44,5 +44,5 @@ Mostrar la etiqueta imprimible del activo y cerrar con tres beneficios: menos ti
 ## Respuestas claras
 
 - **¿Maneja datos de pacientes?** No. Es una herramienta de activos e incidencias técnicas y la política debe prohibir expresamente cargarlos.
-- **¿Está listo para producción clínica?** Está listo para demostración. El piloto requiere completar seguridad operativa, backups, monitoreo, correo y pruebas de aislamiento.
+- **¿Está listo para producción clínica?** Está listo para demostración. Ya cuenta con almacenamiento privado, backups verificados y monitoreo; el piloto requiere completar recuperación de contraseña, sesiones administrables, correo y pruebas adicionales de aislamiento.
 - **¿Se adapta a otras organizaciones?** Sí. La estructura sirve para clínicas, colegios, oficinas y empresas con equipos distribuidos.

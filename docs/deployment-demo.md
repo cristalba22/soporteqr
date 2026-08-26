@@ -6,17 +6,17 @@
 flowchart LR
   V[Web React en Vercel] -->|HTTPS / REST| A[API Express en host de contenedores]
   A --> P[(PostgreSQL administrado)]
-  A --> S[Almacenamiento persistente]
+  A --> S[Cloudflare R2 privado]
   C[Cloudflare DNS / dominio] --> V
   C -. fase posterior .-> A
 ```
 
 - **Vercel:** frontend React/Vite y URL HTTPS de la demostración.
-- **Cloudflare:** DNS y dominio propio. Más adelante puede sumar WAF y R2 para adjuntos.
+- **Cloudflare:** almacenamiento R2 privado para adjuntos y backups cifrados; DNS y dominio propio pueden sumarse cuando se defina el dominio final.
 - **API:** mantener Express como contenedor en Railway, Render, Fly.io o equivalente.
 - **Datos:** PostgreSQL administrado, separado de la aplicación.
 
-No conviene migrar la API actual directamente a Workers sólo para publicar rápido: hoy depende de Express, Prisma/PostgreSQL y adjuntos en disco. La primera publicación debe conservar esa arquitectura y reemplazar el disco local por almacenamiento persistente antes de un piloto real.
+No conviene migrar la API actual directamente a Workers: depende de Express y Prisma/PostgreSQL. La publicación conserva esa arquitectura y desacopla los archivos mediante R2.
 
 ## Vercel
 
@@ -56,4 +56,4 @@ En el release de la API ejecutar `npm run db:deploy` antes de iniciar `npm run s
 
 ## Límite de esta etapa
 
-Esta configuración alcanza para portfolio y demostraciones controladas. Un piloto con una clínica requiere antes recuperación de contraseña, sesiones administrables, correo, backups automáticos, monitoreo, almacenamiento seguro y pruebas adicionales de aislamiento por organización.
+Esta configuración alcanza para portfolio y demostraciones controladas. Los backups automáticos, el monitoreo y el almacenamiento privado ya están activos. Un piloto con una clínica requiere además recuperación de contraseña, sesiones administrables, correo, importación/exportación y pruebas adicionales de aislamiento por organización.

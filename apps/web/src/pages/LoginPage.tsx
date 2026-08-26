@@ -7,11 +7,19 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ApiError } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
+const DEMO_PASSWORD = 'Demo1234!';
+const DEMO_ACCOUNTS = [
+  { role: 'Administrador', email: 'admin@soporteqr.demo', detail: 'Dashboard, activos y configuración' },
+  { role: 'Técnico', email: 'tecnico@soporteqr.demo', detail: 'Asignación, diagnóstico y resolución' },
+  { role: 'Empleado', email: 'empleado@soporteqr.demo', detail: 'Reporte y seguimiento de solicitudes' },
+] as const;
+
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [errorApi, setErrorApi] = useState<string | null>(null);
+  const [demoLoading, setDemoLoading] = useState<string | null>(null);
 
   const {
     register,
@@ -19,22 +27,33 @@ export function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) });
 
-  const onSubmit = async (data: LoginInput) => {
+  const ingresar = async (email: string, password: string) => {
     setErrorApi(null);
     try {
-      await login(data.email, data.password);
+      await login(email, password);
       const destino = (location.state as { from?: Location })?.from?.pathname ?? '/';
       navigate(destino, { replace: true });
     } catch (error) {
-      setErrorApi(error instanceof ApiError ? error.message : 'No se pudo iniciar sesion');
+      setErrorApi(error instanceof ApiError ? error.message : 'No se pudo iniciar sesión');
+    }
+  };
+
+  const onSubmit = async (data: LoginInput) => ingresar(data.email, data.password);
+
+  const ingresarDemo = async (email: string) => {
+    setDemoLoading(email);
+    try {
+      await ingresar(email, DEMO_PASSWORD);
+    } finally {
+      setDemoLoading(null);
     }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       <div>
-        <h1 className="text-xl font-semibold text-marino-950">Iniciar sesion</h1>
-        <p className="mt-1 text-sm text-grafito-500">Accede con tu cuenta institucional</p>
+        <h1 className="text-xl font-semibold text-marino-950">Explorar la demostración</h1>
+        <p className="mt-1 text-sm text-grafito-500">Elegí un perfil para recorrer el flujo completo.</p>
       </div>
 
       {errorApi && (
@@ -43,9 +62,35 @@ export function LoginPage() {
         </div>
       )}
 
+      <div className="grid gap-2" aria-label="Accesos rápidos de demostración">
+        {DEMO_ACCOUNTS.map((account) => (
+          <button
+            key={account.email}
+            type="button"
+            disabled={Boolean(demoLoading) || isSubmitting}
+            onClick={() => void ingresarDemo(account.email)}
+            className="group flex items-center justify-between rounded-xl border border-grafito-200 bg-white px-3.5 py-3 text-left transition hover:border-turquesa-500 hover:bg-turquesa-500/5 disabled:cursor-wait disabled:opacity-60"
+          >
+            <span>
+              <span className="block text-sm font-semibold text-marino-950">{account.role}</span>
+              <span className="mt-0.5 block text-[11px] text-grafito-500">{account.detail}</span>
+            </span>
+            <span className="text-xs font-bold text-turquesa-600 transition group-hover:translate-x-0.5">
+              {demoLoading === account.email ? 'Ingresando…' : 'Probar →'}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-3" aria-hidden="true">
+        <span className="h-px flex-1 bg-grafito-200" />
+        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-grafito-400">Acceso manual</span>
+        <span className="h-px flex-1 bg-grafito-200" />
+      </div>
+
       <div>
         <label htmlFor="email" className="mb-1 block text-sm font-medium text-marino-800">
-          Correo electronico
+          Correo electrónico
         </label>
         <input
           id="email"
@@ -59,7 +104,7 @@ export function LoginPage() {
 
       <div>
         <label htmlFor="password" className="mb-1 block text-sm font-medium text-marino-800">
-          Contrasena
+          Contraseña
         </label>
         <input
           id="password"
@@ -73,16 +118,12 @@ export function LoginPage() {
 
       <button
         type="submit"
-        disabled={isSubmitting}
+        disabled={isSubmitting || Boolean(demoLoading)}
         className="w-full rounded-lg bg-marino-950 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-marino-900 disabled:opacity-60"
       >
         {isSubmitting ? 'Ingresando...' : 'Ingresar'}
       </button>
-
-      <div className="rounded-lg bg-grafito-100 px-3 py-2.5 text-xs text-grafito-500">
-        <p className="font-semibold text-grafito-500">Cuentas de demostracion</p>
-        <p>admin@soporteqr.demo · tecnico@soporteqr.demo · empleado@soporteqr.demo</p>
-      </div>
+      <p className="text-center text-[11px] leading-4 text-grafito-400">Entorno demostrativo con información ficticia y permisos diferenciados por rol.</p>
     </form>
   );
 }
