@@ -21,6 +21,7 @@ assetsRouter.get(
     const reportUrl = buildReportUrl(activo.publicAssetCode, env.APP_BASE_URL);
     const png = await QRCode.toBuffer(reportUrl, { type: 'png', width: 512, margin: 2 });
     res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     const disposition = req.query.download === '1' ? 'attachment' : 'inline';
     res.setHeader('Content-Disposition', `${disposition}; filename="${activo.codigoInterno}-qr.png"`);
     res.setHeader('Cache-Control', 'public, max-age=86400');
