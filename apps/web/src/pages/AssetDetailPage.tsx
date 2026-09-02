@@ -1,4 +1,4 @@
-import { AssetStatus } from '@soporteqr/shared';
+import { AssetStatus, TicketPriority, TicketStatus } from '@soporteqr/shared';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 
@@ -61,6 +61,34 @@ export function AssetDetailPage() {
   const asset = assetQuery.data;
   const descriptor =
     [asset.marca, asset.modelo].filter(Boolean).join(' ') || 'Marca y modelo sin registrar';
+  const ticketsAbiertos = asset.tickets.filter(
+    (ticket) => ticket.estado !== TicketStatus.RESUELTO && ticket.estado !== TicketStatus.CERRADO,
+  );
+  const criticos = ticketsAbiertos.filter(
+    (ticket) => ticket.prioridad === TicketPriority.CRITICA,
+  ).length;
+  const salud = Math.max(
+    12,
+    Math.min(
+      100,
+      100 -
+        asset._count.tickets * 5 -
+        ticketsAbiertos.length * 12 -
+        criticos * 18 -
+        (asset.estado === AssetStatus.EN_REPARACION ? 30 : 0),
+    ),
+  );
+  const saludLabel =
+    salud >= 80 ? 'Saludable' : salud >= 55 ? 'En observación' : 'Intervención recomendada';
+  const saludTone = salud >= 80 ? '#10b981' : salud >= 55 ? '#f59e0b' : '#ef4444';
+  const recomendacion =
+    criticos > 0
+      ? 'Resolver la incidencia crítica antes de devolver el equipo a operación.'
+      : asset._count.tickets >= 4
+        ? 'Revisar recurrencias y comparar el costo de reparación con un reemplazo preventivo.'
+        : ticketsAbiertos.length > 0
+          ? 'Dar seguimiento a los casos abiertos y registrar el próximo mantenimiento.'
+          : 'Mantener el plan preventivo actual. No se detectan bloqueos activos.';
 
   return (
     <div className="space-y-5 pb-10">
@@ -111,6 +139,49 @@ export function AssetDetailPage() {
 
       <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
         <div className="space-y-5">
+          <section className="relative overflow-hidden rounded-2xl border border-grafito-200 bg-white p-5 shadow-panel sm:p-6">
+            <div
+              className="pointer-events-none absolute right-0 top-0 h-48 w-48 rounded-full opacity-10 blur-3xl"
+              style={{ backgroundColor: saludTone }}
+            />
+            <div className="relative grid gap-6 md:grid-cols-[170px_1fr] md:items-center">
+              <div className="mx-auto text-center">
+                <div
+                  className="grid h-36 w-36 place-items-center rounded-full p-2"
+                  style={{
+                    background: `conic-gradient(${saludTone} ${salud * 3.6}deg, #eef1f6 0deg)`,
+                  }}
+                >
+                  <div className="grid h-full w-full place-items-center rounded-full bg-white">
+                    <span>
+                      <strong className="block text-4xl text-marino-950">{salud}</strong>
+                      <small className="text-[9px] font-bold uppercase tracking-[.16em] text-grafito-400">
+                        Salud del activo
+                      </small>
+                    </span>
+                  </div>
+                </div>
+                <p className="mt-3 text-sm font-bold" style={{ color: saludTone }}>
+                  {saludLabel}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[.16em] text-grafito-500">
+                  Diagnóstico operativo
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-marino-950">
+                  Una recomendación, no sólo un historial.
+                </h2>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-grafito-500">{recomendacion}</p>
+                <div className="mt-5 grid grid-cols-3 gap-2">
+                  <HealthMetric value={asset._count.tickets} label="Históricas" />
+                  <HealthMetric value={ticketsAbiertos.length} label="Abiertas" />
+                  <HealthMetric value={criticos} label="Críticas" alert={criticos > 0} />
+                </div>
+              </div>
+            </div>
+          </section>
+
           <section className="rounded-2xl border border-grafito-200 bg-white p-5 shadow-panel sm:p-6">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-grafito-500">
@@ -250,6 +321,29 @@ function Dato({ label, value, mono = false }: { label: string; value: string; mo
       <dd className={`mt-1 text-sm font-semibold text-marino-950 ${mono ? 'font-mono' : ''}`}>
         {value}
       </dd>
+    </div>
+  );
+}
+
+function HealthMetric({
+  value,
+  label,
+  alert = false,
+}: {
+  value: number;
+  label: string;
+  alert?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-xl border p-3 ${alert ? 'border-red-200 bg-red-50' : 'border-grafito-200 bg-grafito-100/60'}`}
+    >
+      <strong className={`block text-xl ${alert ? 'text-red-700' : 'text-marino-950'}`}>
+        {value}
+      </strong>
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-grafito-500">
+        {label}
+      </span>
     </div>
   );
 }

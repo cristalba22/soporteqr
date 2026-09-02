@@ -31,6 +31,19 @@ const ESTADO_CLASSES: Record<AssetStatus, string> = {
   [AssetStatus.EN_DEPOSITO]: 'bg-grafito-100 text-grafito-600 border-grafito-200',
 };
 
+const assetHealth = (asset: AssetListItem) => {
+  const penalty =
+    asset._count.tickets * 7 +
+    (asset.estado === AssetStatus.EN_REPARACION ? 28 : 0) +
+    (asset.estado === AssetStatus.DE_BAJA ? 55 : 0);
+  const score = Math.max(10, 100 - penalty);
+  return {
+    score,
+    label: score >= 80 ? 'Saludable' : score >= 55 ? 'Observar' : 'Intervenir',
+    tone: score >= 80 ? 'bg-emerald-500' : score >= 55 ? 'bg-amber-500' : 'bg-red-500',
+  };
+};
+
 export function AssetsPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -335,7 +348,7 @@ export function AssetsPage() {
                     <th className="px-4 py-3">Equipo</th>
                     <th className="px-4 py-3">Sucursal</th>
                     <th className="px-4 py-3">Estado</th>
-                    <th className="px-4 py-3">Incidencias</th>
+                    <th className="px-4 py-3">Salud estimada</th>
                     <th className="px-4 py-3">Acciones</th>
                   </tr>
                 </thead>
@@ -374,11 +387,20 @@ export function AssetsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <Link
-                          to={`/tickets?assetId=${asset.id}&assetCode=${encodeURIComponent(asset.codigoInterno)}`}
-                          className="inline-flex min-w-8 justify-center rounded-full bg-marino-100 px-2 py-1 text-xs font-bold text-marino-800 hover:bg-turquesa-100"
-                        >
-                          {asset._count.tickets}
+                        <Link to={`/activos/${asset.id}`} className="block min-w-32">
+                          <span className="flex items-center justify-between text-[10px] font-semibold text-grafito-500">
+                            <span>{assetHealth(asset).label}</span>
+                            <strong className="text-marino-900">{assetHealth(asset).score}</strong>
+                          </span>
+                          <span className="mt-1.5 block h-1.5 overflow-hidden rounded-full bg-grafito-100">
+                            <span
+                              className={`block h-full rounded-full ${assetHealth(asset).tone}`}
+                              style={{ width: `${assetHealth(asset).score}%` }}
+                            />
+                          </span>
+                          <span className="mt-1 block text-[9px] text-grafito-400">
+                            {asset._count.tickets} incidencias
+                          </span>
                         </Link>
                       </td>
                       <td className="px-4 py-3">
@@ -442,6 +464,18 @@ export function AssetsPage() {
                     {[asset.marca, asset.modelo].filter(Boolean).join(' ') || 'Sin marca/modelo'} ·{' '}
                     {asset.location.nombre}
                   </p>
+                  <div className="mt-4 rounded-xl bg-grafito-100/70 p-3">
+                    <span className="flex items-center justify-between text-[10px] font-semibold text-grafito-500">
+                      <span>Salud · {assetHealth(asset).label}</span>
+                      <strong className="text-marino-950">{assetHealth(asset).score}/100</strong>
+                    </span>
+                    <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-white">
+                      <span
+                        className={`block h-full rounded-full ${assetHealth(asset).tone}`}
+                        style={{ width: `${assetHealth(asset).score}%` }}
+                      />
+                    </span>
+                  </div>
                   <div className="mt-4 flex flex-wrap gap-3 border-t border-grafito-200 pt-3">
                     <Link
                       to={`/activos/${asset.id}`}

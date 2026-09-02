@@ -14,7 +14,13 @@ import { useParams } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';
 import { api, ApiError, downloadAttachment, uploadAttachment } from '../lib/api';
-import { ESTADO_CLASSES, ESTADO_LABELS, PRIORIDAD_CLASSES, PRIORIDAD_LABELS, formatFecha } from '../lib/labels';
+import {
+  ESTADO_CLASSES,
+  ESTADO_LABELS,
+  PRIORIDAD_CLASSES,
+  PRIORIDAD_LABELS,
+  formatFecha,
+} from '../lib/labels';
 
 interface Persona {
   id: string;
@@ -125,7 +131,9 @@ export function TicketDetallePage() {
       reset({ contenido: '', interno: false });
       queryClient.invalidateQueries({ queryKey: ['ticket', id] });
     } catch (error) {
-      setErrorAccion(error instanceof ApiError ? error.message : 'No se pudo agregar el comentario');
+      setErrorAccion(
+        error instanceof ApiError ? error.message : 'No se pudo agregar el comentario',
+      );
     }
   };
 
@@ -185,7 +193,10 @@ export function TicketDetallePage() {
     setErrorAccion(null);
     setGuardando(true);
     try {
-      await api.post(`/api/tickets/${id}/prioridad`, { prioridad: prioridadDestino, motivo: motivoPrioridad });
+      await api.post(`/api/tickets/${id}/prioridad`, {
+        prioridad: prioridadDestino,
+        motivo: motivoPrioridad,
+      });
       setPrioridadDestino('');
       setMotivoPrioridad('');
       await queryClient.invalidateQueries({ queryKey: ['ticket', id] });
@@ -197,7 +208,8 @@ export function TicketDetallePage() {
   };
 
   if (isLoading) return <p className="text-sm text-grafito-500">Cargando ticket...</p>;
-  if (isError || !ticket) return <p className="text-sm text-red-600">No se pudo cargar el ticket.</p>;
+  if (isError || !ticket)
+    return <p className="text-sm text-red-600">No se pudo cargar el ticket.</p>;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -208,10 +220,14 @@ export function TicketDetallePage() {
             <h1 className="text-xl font-semibold text-marino-950">{ticket.titulo}</h1>
           </div>
           <div className="flex gap-2">
-            <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${ESTADO_CLASSES[ticket.estado]}`}>
+            <span
+              className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${ESTADO_CLASSES[ticket.estado]}`}
+            >
               {ESTADO_LABELS[ticket.estado]}
             </span>
-            <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${PRIORIDAD_CLASSES[ticket.prioridad]}`}>
+            <span
+              className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${PRIORIDAD_CLASSES[ticket.prioridad]}`}
+            >
               {PRIORIDAD_LABELS[ticket.prioridad]}
             </span>
           </div>
@@ -221,16 +237,24 @@ export function TicketDetallePage() {
 
         {ticket.prioridadMotivo && (
           <div className="mt-4 rounded-lg border border-turquesa-500/20 bg-turquesa-500/5 px-3 py-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-turquesa-600">Prioridad calculada: {PRIORIDAD_LABELS[ticket.prioridadCalculada]}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-turquesa-600">
+              Prioridad calculada: {PRIORIDAD_LABELS[ticket.prioridadCalculada]}
+            </p>
             <p className="mt-1 text-sm text-marino-800">{ticket.prioridadMotivo}</p>
-            {ticket.prioridad !== ticket.prioridadCalculada && <p className="mt-1 text-xs text-amber-700">La prioridad actual fue ajustada por un gestor. El motivo figura en el historial.</p>}
+            {ticket.prioridad !== ticket.prioridadCalculada && (
+              <p className="mt-1 text-xs text-amber-700">
+                La prioridad actual fue ajustada por un gestor. El motivo figura en el historial.
+              </p>
+            )}
           </div>
         )}
 
         <div className="mt-5 grid grid-cols-2 gap-4 border-t border-grafito-200 pt-4 text-sm sm:grid-cols-3">
           <div>
             <p className="text-xs uppercase tracking-wide text-grafito-500">Activo</p>
-            <p className="text-marino-900">{ticket.asset.tipo} · {ticket.asset.codigoInterno}</p>
+            <p className="text-marino-900">
+              {ticket.asset.tipo} · {ticket.asset.codigoInterno}
+            </p>
           </div>
           <div>
             <p className="text-xs uppercase tracking-wide text-grafito-500">Ubicacion</p>
@@ -259,13 +283,17 @@ export function TicketDetallePage() {
             {ticket.diagnostico && (
               <div>
                 <p className="text-xs uppercase tracking-wide text-grafito-500">Diagnostico</p>
-                <p className="mt-1 whitespace-pre-wrap text-sm text-marino-800">{ticket.diagnostico}</p>
+                <p className="mt-1 whitespace-pre-wrap text-sm text-marino-800">
+                  {ticket.diagnostico}
+                </p>
               </div>
             )}
             {ticket.solucion && (
               <div>
                 <p className="text-xs uppercase tracking-wide text-grafito-500">Solucion</p>
-                <p className="mt-1 whitespace-pre-wrap text-sm text-marino-800">{ticket.solucion}</p>
+                <p className="mt-1 whitespace-pre-wrap text-sm text-marino-800">
+                  {ticket.solucion}
+                </p>
               </div>
             )}
           </div>
@@ -276,16 +304,40 @@ export function TicketDetallePage() {
           {ticket.adjuntos.length > 0 && (
             <ul className="mt-2 space-y-2 text-sm text-marino-800">
               {ticket.adjuntos.map((adjunto) => (
-                <li key={adjunto.id} className="flex items-center justify-between rounded-lg bg-grafito-100 px-3 py-2">
-                  <span>{adjunto.fileName} <span className="text-xs text-grafito-500">({Math.ceil(adjunto.sizeBytes / 1024)} KB)</span></span>
-                  <button type="button" onClick={() => void downloadAttachment(ticket.id, adjunto.id, adjunto.fileName)} className="font-semibold text-turquesa-600 hover:underline">Descargar</button>
+                <li
+                  key={adjunto.id}
+                  className="flex items-center justify-between rounded-lg bg-grafito-100 px-3 py-2"
+                >
+                  <span>
+                    {adjunto.fileName}{' '}
+                    <span className="text-xs text-grafito-500">
+                      ({Math.ceil(adjunto.sizeBytes / 1024)} KB)
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void downloadAttachment(ticket.id, adjunto.id, adjunto.fileName)}
+                    className="font-semibold text-turquesa-600 hover:underline"
+                  >
+                    Descargar
+                  </button>
                 </li>
               ))}
             </ul>
           )}
           <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-            <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => setArchivo(event.target.files?.[0] ?? null)} className="text-sm text-grafito-600 file:mr-3 file:rounded-lg file:border-0 file:bg-grafito-100 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-marino-900" />
-            <button type="button" disabled={!archivo || subiendoArchivo} onClick={() => void onSubirAdjunto()} className="rounded-lg bg-marino-950 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(event) => setArchivo(event.target.files?.[0] ?? null)}
+              className="text-sm text-grafito-600 file:mr-3 file:rounded-lg file:border-0 file:bg-grafito-100 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-marino-900"
+            />
+            <button
+              type="button"
+              disabled={!archivo || subiendoArchivo}
+              onClick={() => void onSubirAdjunto()}
+              className="rounded-lg bg-marino-950 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            >
               {subiendoArchivo ? 'Subiendo...' : 'Adjuntar imagen'}
             </button>
           </div>
@@ -305,7 +357,12 @@ export function TicketDetallePage() {
           {!ticket.tecnico && (
             <div className="flex flex-wrap items-end gap-3">
               <div>
-                <label htmlFor="technicianId" className="mb-1 block text-xs font-medium text-marino-800">Asignar tecnico</label>
+                <label
+                  htmlFor="technicianId"
+                  className="mb-1 block text-xs font-medium text-marino-800"
+                >
+                  Asignar tecnico
+                </label>
                 <select
                   id="technicianId"
                   value={tecnicoId}
@@ -332,21 +389,52 @@ export function TicketDetallePage() {
           )}
 
           <div className="space-y-3 border-t border-grafito-200 pt-4">
-            <p className="text-xs font-medium text-marino-800">Ajustar prioridad (requiere justificacion)</p>
+            <p className="text-xs font-medium text-marino-800">
+              Ajustar prioridad (requiere justificacion)
+            </p>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-[180px_1fr_auto]">
-              <select value={prioridadDestino} onChange={(event) => setPrioridadDestino(event.target.value)} aria-label="Nueva prioridad" className="rounded-lg border border-grafito-300 bg-white px-3 py-2 text-sm text-marino-900">
+              <select
+                value={prioridadDestino}
+                onChange={(event) => setPrioridadDestino(event.target.value)}
+                aria-label="Nueva prioridad"
+                className="rounded-lg border border-grafito-300 bg-white px-3 py-2 text-sm text-marino-900"
+              >
                 <option value="">Seleccionar...</option>
-                {Object.values(TicketPriority).filter((value) => value !== ticket.prioridad).map((value) => <option key={value} value={value}>{PRIORIDAD_LABELS[value]}</option>)}
+                {Object.values(TicketPriority)
+                  .filter((value) => value !== ticket.prioridad)
+                  .map((value) => (
+                    <option key={value} value={value}>
+                      {PRIORIDAD_LABELS[value]}
+                    </option>
+                  ))}
               </select>
-              <input value={motivoPrioridad} onChange={(event) => setMotivoPrioridad(event.target.value)} placeholder="Motivo concreto del ajuste" aria-label="Motivo del ajuste de prioridad" className="rounded-lg border border-grafito-300 px-3 py-2 text-sm text-marino-900" />
-              <button type="button" disabled={!prioridadDestino || motivoPrioridad.trim().length < 10 || guardando} onClick={() => void onCambiarPrioridad()} className="rounded-lg bg-marino-950 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">Aplicar</button>
+              <input
+                value={motivoPrioridad}
+                onChange={(event) => setMotivoPrioridad(event.target.value)}
+                placeholder="Motivo concreto del ajuste"
+                aria-label="Motivo del ajuste de prioridad"
+                className="rounded-lg border border-grafito-300 px-3 py-2 text-sm text-marino-900"
+              />
+              <button
+                type="button"
+                disabled={!prioridadDestino || motivoPrioridad.trim().length < 10 || guardando}
+                onClick={() => void onCambiarPrioridad()}
+                className="rounded-lg bg-marino-950 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                Aplicar
+              </button>
             </div>
           </div>
 
           {transicionesValidas.length > 0 && (
             <div className="space-y-3 border-t border-grafito-200 pt-4">
               <div>
-                <label htmlFor="ticketStatus" className="mb-1 block text-xs font-medium text-marino-800">Cambiar estado</label>
+                <label
+                  htmlFor="ticketStatus"
+                  className="mb-1 block text-xs font-medium text-marino-800"
+                >
+                  Cambiar estado
+                </label>
                 <select
                   id="ticketStatus"
                   value={estadoDestino}
@@ -400,7 +488,9 @@ export function TicketDetallePage() {
             <div
               key={comentario.id}
               className={`rounded-lg border px-3 py-2.5 text-sm ${
-                comentario.interno ? 'border-amber-200 bg-amber-50' : 'border-grafito-200 bg-grafito-100/60'
+                comentario.interno
+                  ? 'border-amber-200 bg-amber-50'
+                  : 'border-grafito-200 bg-grafito-100/60'
               }`}
             >
               <div className="flex items-center justify-between text-xs text-grafito-500">
@@ -409,13 +499,18 @@ export function TicketDetallePage() {
               </div>
               <p className="mt-1 whitespace-pre-wrap text-marino-900">{comentario.contenido}</p>
               {comentario.interno && (
-                <span className="mt-1 inline-block text-xs font-medium text-amber-700">Nota interna</span>
+                <span className="mt-1 inline-block text-xs font-medium text-amber-700">
+                  Nota interna
+                </span>
               )}
             </div>
           ))}
         </div>
 
-        <form onSubmit={handleSubmit(onComentar)} className="mt-4 space-y-2 border-t border-grafito-200 pt-4">
+        <form
+          onSubmit={handleSubmit(onComentar)}
+          className="mt-4 space-y-2 border-t border-grafito-200 pt-4"
+        >
           <textarea
             rows={3}
             placeholder="Escribe un comentario..."
@@ -443,16 +538,59 @@ export function TicketDetallePage() {
         </form>
       </div>
 
-      <div className="rounded-xl border border-grafito-200 bg-white p-6 shadow-panel">
-        <h2 className="text-sm font-semibold text-marino-950">Historial</h2>
-        <ol className="mt-4 space-y-3 border-l border-grafito-200 pl-4">
-          {ticket.historial.map((item) => (
-            <li key={item.id} className="relative text-sm">
-              <span className="absolute -left-[21px] top-1 h-2.5 w-2.5 rounded-full bg-turquesa-500" />
-              <p className="text-marino-900">{item.descripcion}</p>
-              <p className="text-xs text-grafito-500">
-                {item.actor.nombre} · {formatFecha(item.createdAt)}
-              </p>
+      <div className="overflow-hidden rounded-2xl border border-grafito-200 bg-white shadow-panel">
+        <div className="flex items-end justify-between border-b border-grafito-200 px-6 py-5">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[.16em] text-turquesa-600">
+              Memoria técnica
+            </p>
+            <h2 className="mt-1 text-lg font-semibold text-marino-950">Línea de tiempo</h2>
+          </div>
+          <span className="rounded-full bg-grafito-100 px-3 py-1 text-xs font-semibold text-grafito-500">
+            {ticket.historial.length} eventos
+          </span>
+        </div>
+        <ol className="relative px-6 py-5 before:absolute before:bottom-8 before:left-[43px] before:top-8 before:w-px before:bg-gradient-to-b before:from-turquesa-400 before:via-grafito-200 before:to-transparent">
+          {ticket.historial.map((item, index) => (
+            <li key={item.id} className="relative grid grid-cols-[36px_1fr] gap-4 pb-5 last:pb-0">
+              <span
+                className={`relative z-10 grid h-9 w-9 place-items-center rounded-full border-4 border-white text-xs font-bold shadow-sm ${index === 0 ? 'bg-turquesa-400 text-marino-950' : 'bg-marino-950 text-white'}`}
+              >
+                {index === 0 ? '✓' : String(ticket.historial.length - index).padStart(2, '0')}
+              </span>
+              <article className="rounded-xl border border-grafito-200 bg-grafito-100/45 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <p className="text-sm font-semibold text-marino-950">{item.descripcion}</p>
+                  <span className="text-[10px] font-medium text-grafito-400">
+                    {formatFecha(item.createdAt)}
+                  </span>
+                </div>
+                {(item.estadoAnterior || item.estadoNuevo) && (
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {item.estadoAnterior && (
+                      <span
+                        className={`rounded-full border px-2 py-1 text-[10px] font-semibold ${ESTADO_CLASSES[item.estadoAnterior]}`}
+                      >
+                        {ESTADO_LABELS[item.estadoAnterior]}
+                      </span>
+                    )}
+                    <span className="text-grafito-400">→</span>
+                    {item.estadoNuevo && (
+                      <span
+                        className={`rounded-full border px-2 py-1 text-[10px] font-semibold ${ESTADO_CLASSES[item.estadoNuevo]}`}
+                      >
+                        {ESTADO_LABELS[item.estadoNuevo]}
+                      </span>
+                    )}
+                  </div>
+                )}
+                <p className="mt-3 flex items-center gap-2 text-xs text-grafito-500">
+                  <span className="grid h-6 w-6 place-items-center rounded-full bg-white font-bold text-marino-700">
+                    {item.actor.nombre.slice(0, 1)}
+                  </span>
+                  {item.actor.nombre}
+                </p>
+              </article>
             </li>
           ))}
         </ol>

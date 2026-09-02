@@ -5,7 +5,10 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { AssetsPage } from './AssetsPage';
 
-const { assetsMock, locationsMock } = vi.hoisted(() => ({ assetsMock: vi.fn(), locationsMock: vi.fn() }));
+const { assetsMock, locationsMock } = vi.hoisted(() => ({
+  assetsMock: vi.fn(),
+  locationsMock: vi.fn(),
+}));
 vi.mock('../lib/api', () => ({
   getAssets: assetsMock,
   getLocations: locationsMock,
@@ -19,13 +22,36 @@ describe('AssetsPage', () => {
   it('conecta el activo con sus tickets y permite abrir su edición', async () => {
     const location = { id: '11111111-1111-4111-8111-111111111111', nombre: 'Central' };
     locationsMock.mockResolvedValue([location]);
-    assetsMock.mockResolvedValue([{ id: 'asset-1', codigoInterno: 'IMP-001', publicAssetCode: 'QR-DEMO', tipo: 'Impresora', marca: 'Epson', modelo: 'L3250', numeroSerie: 'SERIE-1', estado: 'ACTIVO', location, _count: { tickets: 3 } }]);
+    assetsMock.mockResolvedValue([
+      {
+        id: 'asset-1',
+        codigoInterno: 'IMP-001',
+        publicAssetCode: 'QR-DEMO',
+        tipo: 'Impresora',
+        marca: 'Epson',
+        modelo: 'L3250',
+        numeroSerie: 'SERIE-1',
+        estado: 'ACTIVO',
+        location,
+        _count: { tickets: 3 },
+      },
+    ]);
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
-    render(<QueryClientProvider client={queryClient}><MemoryRouter><AssetsPage /></MemoryRouter></QueryClientProvider>);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <AssetsPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
 
     expect(await screen.findByRole('heading', { name: 'Activos conectados' })).toBeInTheDocument();
-    expect((await screen.findAllByRole('link', { name: 'Tickets' }))[0]).toHaveAttribute('href', '/tickets?assetId=asset-1&assetCode=IMP-001');
+    expect((await screen.findAllByRole('link', { name: 'Tickets' }))[0]).toHaveAttribute(
+      'href',
+      '/tickets?assetId=asset-1&assetCode=IMP-001',
+    );
+    expect(screen.getAllByText(/Observar/).length).toBeGreaterThan(0);
     fireEvent.click((await screen.findAllByRole('button', { name: 'Editar' }))[0]!);
     expect(screen.getByRole('heading', { name: 'Editar IMP-001' })).toBeInTheDocument();
   });
