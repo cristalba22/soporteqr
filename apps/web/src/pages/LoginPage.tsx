@@ -9,9 +9,21 @@ import { useAuth } from '../context/AuthContext';
 
 const DEMO_PASSWORD = 'Demo1234!';
 const DEMO_ACCOUNTS = [
-  { role: 'Administrador', email: 'admin@soporteqr.demo', detail: 'Dashboard, activos y configuración' },
-  { role: 'Técnico', email: 'tecnico@soporteqr.demo', detail: 'Asignación, diagnóstico y resolución' },
-  { role: 'Empleado', email: 'empleado@soporteqr.demo', detail: 'Reporte y seguimiento de solicitudes' },
+  {
+    role: 'Administrador',
+    email: 'admin@soporteqr.demo',
+    detail: 'Dashboard, activos y configuración',
+  },
+  {
+    role: 'Técnico',
+    email: 'tecnico@soporteqr.demo',
+    detail: 'Asignación, diagnóstico y resolución',
+  },
+  {
+    role: 'Empleado',
+    email: 'empleado@soporteqr.demo',
+    detail: 'Reporte y seguimiento de solicitudes',
+  },
 ] as const;
 
 export function LoginPage() {
@@ -31,7 +43,7 @@ export function LoginPage() {
     setErrorApi(null);
     try {
       await login(email, password);
-      const destino = (location.state as { from?: Location })?.from?.pathname ?? '/';
+      const destino = (location.state as { from?: Location })?.from?.pathname ?? '/tickets';
       navigate(destino, { replace: true });
     } catch (error) {
       setErrorApi(error instanceof ApiError ? error.message : 'No se pudo iniciar sesión');
@@ -53,7 +65,9 @@ export function LoginPage() {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       <div>
         <h1 className="text-xl font-semibold text-marino-950">Explorar la demostración</h1>
-        <p className="mt-1 text-sm text-grafito-500">Elegí un perfil para recorrer el flujo completo.</p>
+        <p className="mt-1 text-sm text-grafito-500">
+          Elegí un perfil para recorrer el flujo completo.
+        </p>
       </div>
 
       {errorApi && (
@@ -84,7 +98,9 @@ export function LoginPage() {
 
       <div className="flex items-center gap-3" aria-hidden="true">
         <span className="h-px flex-1 bg-grafito-200" />
-        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-grafito-400">Acceso manual</span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-grafito-400">
+          Acceso manual
+        </span>
         <span className="h-px flex-1 bg-grafito-200" />
       </div>
 
@@ -123,7 +139,9 @@ export function LoginPage() {
       >
         {isSubmitting ? 'Ingresando...' : 'Ingresar'}
       </button>
-      <p className="text-center text-[11px] leading-4 text-grafito-400">Entorno demostrativo con información ficticia y permisos diferenciados por rol.</p>
+      <p className="text-center text-[11px] leading-4 text-grafito-400">
+        Entorno demostrativo con información ficticia y permisos diferenciados por rol.
+      </p>
     </form>
   );
 }

@@ -25,7 +25,7 @@ describe('AssetsPage', () => {
     render(<QueryClientProvider client={queryClient}><MemoryRouter><AssetsPage /></MemoryRouter></QueryClientProvider>);
 
     expect(await screen.findByRole('heading', { name: 'Activos conectados' })).toBeInTheDocument();
-    expect((await screen.findAllByRole('link', { name: 'Tickets' }))[0]).toHaveAttribute('href', '/?assetId=asset-1&assetCode=IMP-001');
+    expect((await screen.findAllByRole('link', { name: 'Tickets' }))[0]).toHaveAttribute('href', '/tickets?assetId=asset-1&assetCode=IMP-001');
     fireEvent.click((await screen.findAllByRole('button', { name: 'Editar' }))[0]!);
     expect(screen.getByRole('heading', { name: 'Editar IMP-001' })).toBeInTheDocument();
   });

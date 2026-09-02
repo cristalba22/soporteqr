@@ -16,7 +16,7 @@ describe('LoginPage', () => {
       <MemoryRouter initialEntries={['/login']}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/" element={<p>Inicio autenticado</p>} />
+          <Route path="/tickets" element={<p>Inicio autenticado</p>} />
         </Routes>
       </MemoryRouter>,
     );
@@ -35,7 +35,7 @@ describe('LoginPage', () => {
       <MemoryRouter initialEntries={['/login']}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/" element={<p>Inicio autenticado</p>} />
+          <Route path="/tickets" element={<p>Inicio autenticado</p>} />
         </Routes>
       </MemoryRouter>,
     );
